@@ -93,7 +93,6 @@ class MainWindows(QWidget):
         layout_buttons.addWidget(self.btn_output)
 
         btn_help = QPushButton('帮助')
-        # btn_help.setText('<a href="http://www.baidu.com">帮助</a>')
         btn_help.clicked.connect(self.clickBtn_help)
         layout_buttons.addWidget(btn_help)
 
@@ -115,6 +114,7 @@ class MainWindows(QWidget):
         author_label.setAlignment(Qt.AlignRight)
         author_label.setText('<a href="https://github.com/wxjing4me" style="text-decoration:none;color:black">@wxjing</a>')
         author_label.setOpenExternalLinks(True)
+        author_label.setToolTip('你发现了什么？点击有惊喜哦~')
 
         layout_status.addWidget(self.status_label)
         layout_status.addWidget(author_label)
@@ -140,7 +140,7 @@ class MainWindows(QWidget):
     def clickBtn_downloadExcel(self):
         templet_excel_path, _ = QFileDialog.getSaveFileName(self, '保存模板文件', 'templets/example.xlsx')
         if len(templet_excel_path.strip()) != 0:
-            print('保存模板文件在：%s' % templet_excel_path)
+            print(f'保存模板文件在：{templet_excel_path}')
             try:
                 shutil.copyfile('templets/example.xlsx', templet_excel_path)
             except Exception as e:
