@@ -4,7 +4,7 @@ from requests import get as requests_get
 def testApiToken(token):
     token = token.strip()
     testRes = {}
-    if len(token == 0:
+    if len(token) == 0:
         testRes['code'] = 0
         testRes['msg'] = 'Token值不能为空'
         return testRes
