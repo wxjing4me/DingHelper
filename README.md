@@ -1,10 +1,16 @@
-# DingMinProgram
+# DingHelper
 
-> 钉钉位置分析小工具
+> 钉钉位置分析小程序
 
 ## 界面
 
-![界面](https://github.com/wxjing4me/DingHelper/blob/master/docs/page1.png)
+### 主界面
+
+![主界面](https://github.com/wxjing4me/DingHelper/blob/master/docs/page1.png)
+
+### 整合文件界面
+
+![整合文件界面](https://github.com/wxjing4me/DingHelper/blob/master/docs/page2.png)
 
 ## 功能
 
@@ -13,6 +19,8 @@
    注：此处“榕”指的是：福州市鼓楼区、台江区、晋安区、仓山区、马尾区、闽侯县。
 
 2. 在地图上绘制每个人员随时间变化的地点变动
+
+3. 将钉钉健康打卡导出的数据进行整合汇总
 
 ## 缺陷
 
@@ -24,29 +32,35 @@
 
 * 受制于腾讯地图API的次数限制
 
+* 运行在Windows下最佳
+
 ## Dependencies
 
 - Python 3.6
 - pyecharts
 - PyQt5
+- xlrd / xlwings
 
-#### 安装
+### Installation
 
 ```
 ~$ pip install pyecharts
 ~$ pip install PyQt5
-
+~$ pip install xlwings
 ```
 
-pywin32-227-cp36-cp36m-win_amd64.whl
+* PyQt5-5.14.1-5.14.1-cp35.cp36.cp37.cp38-none-win_amd64.whl
+> https://pypi.org/project/PyQt5/#files
+
+* pywin32-227-cp36-cp36m-win_amd64.whl
 > https://pypi.org/project/pywin32/#files
 
-## 帮助文档
-
-> https://docs.qq.com/doc/DZmJTeUZqYll2U2tR
-
-## Run
+### Run
 
 ```
 > python app.py
 ```
+
+## Help
+
+> https://docs.qq.com/doc/DZmJTeUZqYll2U2tR
