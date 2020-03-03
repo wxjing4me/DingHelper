@@ -1,5 +1,4 @@
-import xlrd
-import json
+from xlrd import open_workbook as xlrd_open_workbook
 import xlwings as xw
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 
@@ -7,9 +6,9 @@ from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 START_ROW = 1 # default:1
 
 def testExcel(excel_path):
-    excel = xlrd.open_workbook(excel_path)
+    excel = xlrd_open_workbook(excel_path)
     try:    
-        excel = xlrd.open_workbook(excel_path)
+        excel = xlrd_open_workbook(excel_path)
         return True
     except:
         return False
@@ -17,7 +16,7 @@ def testExcel(excel_path):
 def readExcel(excel_path):
     stuDatas = []
     try:
-        data = xlrd.open_workbook(excel_path)
+        data = xlrd_open_workbook(excel_path)
         table = data.sheet_by_index(0)
     except:
         return stuDatas
@@ -144,7 +143,7 @@ class MergeExcelWorker(QObject):
         datas = {}
         stuInfos = []
         for excel_path in excel_list:
-            excel = xlrd.open_workbook(excel_path)
+            excel = xlrd_open_workbook(excel_path)
             tables = excel.sheets()
             for table in tables:
                 header = table.row_values(0)

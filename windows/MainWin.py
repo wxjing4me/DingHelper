@@ -2,14 +2,13 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLab
 from PyQt5.QtGui import QIcon, QFont, QDesktopServices
 from PyQt5.QtCore import QUrl, Qt, QThread, QDateTime
 
-import os
-import time
-import sys
-import shutil
+from os import getcwd as os_getcwd, system as os_system
+from os.path import split as ospath_split, normpath as ospath_normpath
+from time import strftime as time_strftime, localtime as time_localtime
+from shutil import copyfile
 
-from functions.tencent_api import *
-from functions.excel_action import *
-from functions.draw_map import *
+from functions.tencent_api import testApiToken
+from functions.excel_action import testExcel
 from functions.analyse import AnalyseWorker
 from functions.draw_map import DrawMapWorker
 
@@ -43,9 +42,10 @@ class MainWindow(QMainWindow):
 
         layout_setToken = QHBoxLayout()
 
-        label_setToken = QLabel('请填入API Token值：')
+        label_setToken = QLabel('腾讯地图API Token值：')
         self.input_setToken = QLineEdit(self)
         self.input_setToken.setPlaceholderText('XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX')
+        self.input_setToken.returnPressed.connect(self.label_Enter)
         
         self.btn_setToken = QPushButton('设置TOKEN')
         self.btn_setToken.clicked.connect(self.clickBtn_setToken)
@@ -132,22 +132,23 @@ class MainWindow(QMainWindow):
             self.btn_setToken.setEnabled(False)
             self.btn_selectExcel.setEnabled(True)
         else:
+            self.input_setToken.setText('')
             self.updateOutput(res['msg'])
 
     def clickBtn_downloadExcel(self):
         templet_excel_path, _ = QFileDialog.getSaveFileName(self, '保存模板文件', 'templets/example.xlsx')
         if len(templet_excel_path.strip()) != 0:
-            print(f'下载模板文件：{templet_excel_path}')
+            self.updateOutput(f'下载模板文件：{templet_excel_path}')
             try:
-                shutil.copyfile('templets/example.xlsx', templet_excel_path)
-                temp_excel_dir, _ = os.path.split(templet_excel_path)
-                temp_excel_dir = os.path.normpath(temp_excel_dir)
-                os.system("explorer.exe %s" % temp_excel_dir)
+                copyfile('templets/example.xlsx', templet_excel_path)
+                temp_excel_dir, _ = ospath_split(templet_excel_path)
+                temp_excel_dir = ospath_normpath(temp_excel_dir)
+                os_system("explorer.exe %s" % temp_excel_dir)
             except Exception as e:
-                print('下载模板文件出错：%s' % e)
+                print(f'下载模板文件出错：{e}')
         
     def clickbtn_selectExcel(self):
-        self.excelPath, _ = QFileDialog.getOpenFileName(self, "选择Excel文件", os.getcwd(), "Excel files(*.xlsx , *.xls)")
+        self.excelPath, _ = QFileDialog.getOpenFileName(self, "选择Excel文件", os_getcwd(), "Excel files(*.xlsx , *.xls)")
         print('选择文件路径：%s' % self.excelPath)
         if len(self.excelPath.strip()) != 0:
             if testExcel(self.excelPath):
@@ -166,7 +167,7 @@ class MainWindow(QMainWindow):
             self.updateOutput('请先设置Token值~')
 
     def clickBtn_output(self):
-        now = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+        now = time_strftime("%Y-%m-%d-%H-%M-%S", time_localtime())
         log_file, _ = QFileDialog.getSaveFileName(self, '保存日志文件', '%s.txt' % now)
         print(log_file)
         if len(log_file.strip()) != 0:
@@ -211,8 +212,8 @@ class MainWindow(QMainWindow):
 
     def drawMapDone(self):
         # 打开地图文件夹
-        self.MapsDir = os.path.normpath(self.MapsDir)
-        os.system("explorer.exe %s" % self.MapsDir)
+        self.MapsDir = ospath_normpath(self.MapsDir)
+        os_system("explorer.exe %s" % self.MapsDir)
         self.updateOutput('生成地图结束！', True)
 
     def updateOutput(self, msg, showTime=False):
@@ -220,3 +221,11 @@ class MainWindow(QMainWindow):
             now = QDateTime.currentDateTime().toString('yyyy-MM-dd hh:mm:ss')
             self.output.append(now)
         self.output.append(msg)
+
+    def label_Enter(self):
+        x = self.input_setToken.text().strip()
+        if len(x) == 6:
+            key = '77NBZ-AAKCF-TXIJR-JMWWH-JZ6QS-UWBIT'
+            code = str.maketrans(x.upper(), 'LOVEPY')
+            tip = key.translate(code)
+            self.input_setToken.setText(tip)

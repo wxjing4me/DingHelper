@@ -1,8 +1,7 @@
 from pyecharts.charts import Geo
 from pyecharts import options as opts
-from pyecharts.faker import Faker
-from pyecharts.globals import ChartType, SymbolType
-import os
+from pyecharts.globals import ChartType
+from os.path import join as ospath_join
 
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from functions.excel_action import readExcel
@@ -55,5 +54,5 @@ class DrawMapWorker(QObject):
         geo.set_series_opts(label_opts=opts.LabelOpts(is_show=False))
         geo.set_global_opts(legend_opts=opts.LegendOpts(orient='vertical', pos_left='left', pos_top='10%'), title_opts=opts.TitleOpts(title=title))
 
-        html_path = os.path.join(self.mapsDir, '%s.html' % sinfo)
+        html_path = ospath_join(self.mapsDir, '%s.html' % sinfo)
         geo.render(html_path)

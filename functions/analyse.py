@@ -1,9 +1,9 @@
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QDateTime
 from functions.excel_action import readExcel
 
-import requests
-import json
-import time
+from requests import get as requests_get
+from json import loads as json_loads
+from time import sleep as time_sleep
 
 DEFAULT_Address = {'nation': '未知'}
 DEFAULT_Location = [20, 80, "未知"]
@@ -66,7 +66,7 @@ class AnalyseWorker(QObject):
             # print(location)
             longitude, latitude, _ = location
             try:
-                response = requests.get('%s%s,%s&key=%s' % (API_URL_LL2Address, latitude, longitude, self.apiToken))
+                response = requests_get('%s%s,%s&key=%s' % (API_URL_LL2Address, latitude, longitude, self.apiToken))
                 REQ_CNT += 1
             except Exception as e:
                 self._signal.emit('ERROR: request请求错误: %s' % e)
@@ -74,14 +74,14 @@ class AnalyseWorker(QObject):
             if response.status_code != 200:
                 self._signal.emit('ERROR: %d 获取腾讯地图地址失败' % response.status_code)
             else:
-                res = json.loads(response.text)
+                res = json_loads(response.text)
                 if res['status'] != 0:
                     self._signal.emit('ERROR: 腾讯地图API错误（逆地址解析）：%s' % res['message'])
                     exit()
                 else:
                     address = res['result']['address_component']
             if REQ_CNT % MAX_CNT_PER_SEC == 0:
-                time.sleep(1)
+                time_sleep(1)
         except Exception as e:
             print(e)
             address = DEFAULT_Address
