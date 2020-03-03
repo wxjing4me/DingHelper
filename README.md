@@ -38,6 +38,9 @@
 
 ```
 
+pywin32-227-cp36-cp36m-win_amd64.whl
+> https://pypi.org/project/pywin32/#files
+
 ## 帮助文档
 
 > https://docs.qq.com/doc/DZmJTeUZqYll2U2tR

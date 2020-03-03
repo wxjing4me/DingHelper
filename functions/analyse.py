@@ -139,10 +139,10 @@ class AnalyseWorker(QObject):
 
     def aStuAnalyse(self, aStuData):
     
-        sno, sname = aStuData['info']
+        sinfo = aStuData['info']
         sdata = aStuData['data']
 
-        self._signal.emit('%s %s' % (sno, sname))
+        self._signal.emit('%s' % sinfo)
 
         yesterDate, yesterAddress = '', ''
         for date, location in sdata.items():

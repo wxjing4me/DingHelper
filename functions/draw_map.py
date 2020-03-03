@@ -30,7 +30,7 @@ class DrawMapWorker(QObject):
 
     def drawGeoMap(self, aStuData):
 
-        sno, sname = aStuData['info']
+        sinfo = '_'.join(aStuData['info'].split(' '))
         sdata = aStuData['data']
 
         geo = Geo()
@@ -50,10 +50,10 @@ class DrawMapWorker(QObject):
         for date, data in sdata.items():
             add_data(date, data)
 
-        title = '%s %s 位置动态' % (sno, sname)
+        title = '%s 位置动态' % aStuData['info']
 
         geo.set_series_opts(label_opts=opts.LabelOpts(is_show=False))
         geo.set_global_opts(legend_opts=opts.LegendOpts(orient='vertical', pos_left='left', pos_top='10%'), title_opts=opts.TitleOpts(title=title))
 
-        html_path = os.path.join(self.mapsDir, '%s_%s.html' % (sno, sname))
+        html_path = os.path.join(self.mapsDir, '%s.html' % sinfo)
         geo.render(html_path)
