@@ -1,3 +1,4 @@
+#-*-coding:utf-8-*-
 from pyecharts.charts import Geo
 from pyecharts import options as opts
 from pyecharts.globals import ChartType

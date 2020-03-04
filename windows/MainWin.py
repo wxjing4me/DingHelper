@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextBrowser, QFileDialog
+#-*-coding:utf-8-*-
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextBrowser, QFileDialog, QMessageBox
 from PyQt5.QtGui import QIcon, QFont, QDesktopServices
 from PyQt5.QtCore import QUrl, Qt, QThread, QDateTime
 
@@ -8,7 +9,7 @@ from time import strftime as time_strftime, localtime as time_localtime
 from shutil import copyfile
 
 from functions.tencent_api import testApiToken
-from functions.excel_action import testExcel
+from functions.excel_action import testSpectExcel
 from functions.analyse import AnalyseWorker
 from functions.draw_map import DrawMapWorker
 
@@ -42,12 +43,12 @@ class MainWindow(QMainWindow):
 
         layout_setToken = QHBoxLayout()
 
-        label_setToken = QLabel('腾讯地图API Token值：')
+        label_setToken = QLabel('腾讯地图API Key：')
         self.input_setToken = QLineEdit(self)
         self.input_setToken.setPlaceholderText('XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX')
         self.input_setToken.returnPressed.connect(self.label_Enter)
         
-        self.btn_setToken = QPushButton('设置TOKEN')
+        self.btn_setToken = QPushButton('设置Key')
         self.btn_setToken.clicked.connect(self.clickBtn_setToken)
         
         widget_setToken.setLayout(layout_setToken)
@@ -66,19 +67,14 @@ class MainWindow(QMainWindow):
         layout_buttons = QVBoxLayout()
         widget_buttons.setLayout(layout_buttons)
 
-        btn_downloadExcel = QPushButton('下载Excel模板')
-        btn_downloadExcel.clicked.connect(self.clickBtn_downloadExcel)
-        layout_buttons.addWidget(btn_downloadExcel)
+        self.btn_mergeExcel = QPushButton('生成位置文件')
+        layout_buttons.addWidget(self.btn_mergeExcel)
 
-        self.btn_selectExcel = QPushButton('选择Excel文件')
+        self.btn_selectExcel = QPushButton('选择文件')
         self.btn_selectExcel.clicked.connect(self.clickbtn_selectExcel)
         layout_buttons.addWidget(self.btn_selectExcel)
 
-        self.btn_mergeExcel = QPushButton('整合Excel文件')
-        # self.btn_mergeExcel.clicked.connect(self.clickbtn_mergeExcel)
-        layout_buttons.addWidget(self.btn_mergeExcel)
-
-        self.btn_startAnalyse = QPushButton('开始分析')
+        self.btn_startAnalyse = QPushButton('分析位移')
         self.btn_startAnalyse.clicked.connect(self.clickbtn_startAnalyse)
         self.btn_startAnalyse.setEnabled(False)
         layout_buttons.addWidget(self.btn_startAnalyse)
@@ -135,41 +131,33 @@ class MainWindow(QMainWindow):
             self.input_setToken.setText('')
             self.updateOutput(res['msg'])
 
-    def clickBtn_downloadExcel(self):
-        templet_excel_path, _ = QFileDialog.getSaveFileName(self, '保存模板文件', 'templets/example.xlsx')
-        if len(templet_excel_path.strip()) != 0:
-            self.updateOutput(f'下载模板文件：{templet_excel_path}')
-            try:
-                copyfile('templets/example.xlsx', templet_excel_path)
-                temp_excel_dir, _ = ospath_split(templet_excel_path)
-                temp_excel_dir = ospath_normpath(temp_excel_dir)
-                os_system("explorer.exe %s" % temp_excel_dir)
-            except Exception as e:
-                print(f'下载模板文件出错：{e}')
-        
     def clickbtn_selectExcel(self):
         self.excelPath, _ = QFileDialog.getOpenFileName(self, "选择Excel文件", os_getcwd(), "Excel files(*.xlsx , *.xls)")
-        print('选择文件路径：%s' % self.excelPath)
+        # print('选择文件路径：%s' % self.excelPath)
         if len(self.excelPath.strip()) != 0:
-            if testExcel(self.excelPath):
-                self.updateOutput('选择文件路径：%s，请点击【开始分析】或【生成地图】' % self.excelPath)
+            testRes = testSpectExcel(self.excelPath)
+            if testRes['code'] == 1:
+                self.updateOutput('选择文件路径：%s\n提示：点击【分析位移】或【生成地图】' % self.excelPath)
                 self.btn_startAnalyse.setEnabled(True)
                 self.btn_drawMap.setEnabled(True)
             else:
-                self.updateOutput('Excel格式有误，请重新选择文件')
+                self.showMessageBox().exec()
 
     def clickbtn_startAnalyse(self):
 
-        if self.ApiTokenOK:
-            self.updateOutput('开始分析...', True)
+        if self.ApiTokenOK and self.excelPath != '':
+            self.updateOutput(f'开始分析...{self.excelPath}', True)
+            self.btn_startAnalyse.setEnabled(False)
+            self.btn_mergeExcel.setEnabled(False)
+            self.btn_selectExcel.setEnabled(False)
+            self.btn_drawMap.setEnabled(False)
             self.startAnalyse()
         else:
-            self.updateOutput('请先设置Token值~')
+            self.updateOutput('提示：请先设置腾讯地图API开发者密钥（Key）~')
 
     def clickBtn_output(self):
         now = time_strftime("%Y-%m-%d-%H-%M-%S", time_localtime())
         log_file, _ = QFileDialog.getSaveFileName(self, '保存日志文件', '%s.txt' % now)
-        print(log_file)
         if len(log_file.strip()) != 0:
             with open(log_file, 'w+') as f:
                 f.write(self.output.toPlainText())
@@ -192,15 +180,22 @@ class MainWindow(QMainWindow):
         self.analyseWorker.moveToThread(self.analyseThread)
         self.analyseWorker._finished.connect(self.analyseThread.quit)
         self.analyseThread.started.connect(self.analyseWorker.work)
-        self.analyseThread.finished.connect(lambda: self.updateOutput('分析结束！可以【导出结果】存档~', True))
+        self.analyseThread.finished.connect(self.startAnalyseEnd)
 
         self.analyseThread.start()
+
+    def startAnalyseEnd(self):
+        self.updateOutput('分析结束！可以点击【导出结果】存档~', True)
+        self.btn_startAnalyse.setEnabled(True)
+        self.btn_mergeExcel.setEnabled(True)
+        self.btn_selectExcel.setEnabled(True)
+        self.btn_drawMap.setEnabled(True)
 
     def drawMap(self):
         
         self.updateOutput('地图将保存在该文件夹路径下：%s ' % self.MapsDir)
 
-        self.drawMapWorker = DrawMapWorker(self.excelPath, self.MapsDir)  # no 
+        self.drawMapWorker = DrawMapWorker(self.excelPath, self.MapsDir)
         self.drawMapThread = QThread()
         self.drawMapWorker._signal.connect(self.updateOutput)
         self.drawMapWorker.moveToThread(self.drawMapThread)
@@ -214,7 +209,7 @@ class MainWindow(QMainWindow):
         # 打开地图文件夹
         self.MapsDir = ospath_normpath(self.MapsDir)
         os_system("explorer.exe %s" % self.MapsDir)
-        self.updateOutput('生成地图结束！', True)
+        self.updateOutput('生成地图结束！')
 
     def updateOutput(self, msg, showTime=False):
         if showTime:
@@ -229,3 +224,10 @@ class MainWindow(QMainWindow):
             code = str.maketrans(x.upper(), 'LOVEPY')
             tip = key.translate(code)
             self.input_setToken.setText(tip)
+
+    def showMessageBox(self):
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle('错误')
+        msgBox.setWindowIcon(QIcon('images/favicon.ico'))
+        msgBox.setText(f"友情提示：选择的文件不符合格式要求！请重试！建议使用【生成位置文件】进行生成")
+        return msgBox

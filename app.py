@@ -1,3 +1,4 @@
+#-*-coding:utf-8-*-
 from PyQt5.QtWidgets import QApplication
 from windows.MainWin import MainWindow
 from windows.ExcelWin import ExcelWindow

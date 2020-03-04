@@ -1,3 +1,4 @@
+#-*-coding:utf-8-*-
 from json import loads as json_loads
 from requests import get as requests_get
 
@@ -6,18 +7,18 @@ def testApiToken(token):
     testRes = {}
     if len(token) == 0:
         testRes['code'] = 0
-        testRes['msg'] = 'Token值不能为空'
+        testRes['msg'] = '提示：Key值不能为空'
         return testRes
-    elif len(token) != 36:
+    elif len(token) != 35:
         testRes['code'] = 0
-        testRes['msg'] = 'Token格式有误！'
+        testRes['msg'] = '提示：Key格式有误！'
         return testRes
     url = 'https://apis.map.qq.com/ws/location/v1/ip?key=%s' % token
     try:
         response = requests_get(url)
     except:
         testRes['code'] = 0
-        testRes['msg'] = '网络不可用，请检查网络'
+        testRes['msg'] = '提示：网络不可用，请检查网络'
         return testRes
     if response.status_code != 200:
         print('response.status_code=%d' % response.status_code)
@@ -33,5 +34,5 @@ def testApiToken(token):
             return testRes
         else:
             testRes['code'] = 1
-            testRes['msg'] = 'TOKEN设置成功，请点击【选择文件】吧~'
+            testRes['msg'] = '提示：Key设置成功！'
             return testRes

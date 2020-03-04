@@ -1,4 +1,4 @@
-
+#-*-coding:utf-8-*-
 
 def test_compareAdress():
     addr1 = {'nation': '中国', 'province': '福建省', 'city': '漳州市', 'district': '芗城区', 'street': '延安北路', 'street_number': '延安北路52号'}

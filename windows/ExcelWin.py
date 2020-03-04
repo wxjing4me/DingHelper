@@ -1,12 +1,13 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog, QCheckBox, QListWidget, QListWidgetItem
+#-*-coding:utf-8-*-
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog, QCheckBox, QListWidget, QListWidgetItem, QMessageBox
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt, QThread
 
-import os
-import time
-import sys
+from os import getcwd as os_getcwd, system as os_system
+from os.path import split as os_path_split, normpath as os_path_normpath
+from time import strftime as time_strftime, localtime as time_localtime
 
-from functions.excel_action import MergeExcelWorker
+from functions.excel_action import MergeExcelWorker, testRawExcel
 
 class ExcelWindow(QWidget):
     def __init__(self):
@@ -21,9 +22,9 @@ class ExcelWindow(QWidget):
 
         font_Yahei = QFont("Microsoft YaHei")
 
-        self.setWindowTitle('整合文件')
+        self.setWindowTitle('生成位置文件')
         self.setWindowIcon(QIcon('images/favicon.ico'))
-        self.setGeometry(300, 100, 600, 400)
+        self.setGeometry(450, 200, 600, 400)
         
         layout_main = QVBoxLayout()
         self.setLayout(layout_main)
@@ -64,7 +65,7 @@ class ExcelWindow(QWidget):
         self.btn_clearExcel.clicked.connect(self.clickbtn_clearExcel)
         layout_buttons.addWidget(self.btn_clearExcel)
 
-        self.btn_mergeExcel = QPushButton('开始整合')
+        self.btn_mergeExcel = QPushButton('开始生成')
         self.btn_mergeExcel.clicked.connect(self.clickbtn_mergeExcel)
         self.btn_mergeExcel.setEnabled(False)
         layout_buttons.addWidget(self.btn_mergeExcel)
@@ -118,13 +119,18 @@ class ExcelWindow(QWidget):
             return False
 
     def clickBtn_addExcel(self):
-        temp_excelPathList, _ = QFileDialog.getOpenFileNames(self, "选择Excel文件", os.getcwd(), "Excel files(*.xlsx , *.xls)")
+        temp_excelPathList, _ = QFileDialog.getOpenFileNames(self, "选择【每日健康打卡】导出数据文件", os_getcwd(), "Excel files(*.xlsx , *.xls)")
+        errMsg = []
         for excelPath in temp_excelPathList:
             if excelPath not in self.excelPathList:
-                excelDir, excelName = os.path.split(excelPath)
-                box_path = QCheckBox(f'{excelName} ({excelDir})')
-                self.widget_pathListBox.addItem(f'{excelPath}')
-                self.excelPathList.append(excelPath)
+                testRes = testRawExcel(excelPath)
+                if testRes['code'] == 1:
+                    self.widget_pathListBox.addItem(f'{excelPath}')
+                    self.excelPathList.append(excelPath)
+                else:
+                    errMsg.append(testRes['msg'])
+        if len(errMsg) != 0:
+            self.showMessageBox(errMsg).exec()
         self.btn_mergeExcel.setEnabled(self.testBtn_mergeExcel())
 
     def clickbtn_deleteExcel(self):
@@ -145,9 +151,9 @@ class ExcelWindow(QWidget):
 
     def clickbtn_mergeExcel(self):
         # 选择输出文件路径
-        now = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+        now = time_strftime("%Y-%m-%d-%H-%M-%S", time_localtime())
         self.excelOutputPath, _ = QFileDialog.getSaveFileName(self, "选择Excel保存路径", '每日健康打卡位置汇总（%s）' % now, "Excel files(*.xlsx , *.xls)")
-        self.excelDir, self.excelName = os.path.split(self.excelOutputPath)
+        self.excelDir, self.excelName = os_path_split(self.excelOutputPath)
 
         if len(self.excelOutputPath.strip()) != 0:
             self.mergeExcelStart()
@@ -155,8 +161,8 @@ class ExcelWindow(QWidget):
             self.mergeExcelEnd()
 
     def clickbtn_openMergeExcelDir(self):
-        excelDir = os.path.normpath(self.excelDir)
-        os.system("explorer.exe %s" % excelDir)
+        excelDir = os_path_normpath(self.excelDir)
+        os_system("explorer.exe %s" % excelDir)
 
     def mergeExcel(self):
 
@@ -166,14 +172,14 @@ class ExcelWindow(QWidget):
         self.mergeExcelWorker.moveToThread(self.mergeExcelThread)
         self.mergeExcelWorker._finished.connect(self.mergeExcelThread.quit)
         self.mergeExcelThread.started.connect(self.mergeExcelWorker.work)
-        self.mergeExcelThread.finished.connect(lambda: self.updateStatus(f'整合结束，文件名：{self.excelName}'))
+        self.mergeExcelThread.finished.connect(lambda: self.updateStatus(f'生成位置文件结束!【打开路径】吧~ 文件名：{self.excelName}'))
 
         self.mergeExcelThread.start()
 
     def mergeExcelStart(self):
-        self.updateStatus(f'开始整合{len(self.excelPathList)}个Excel文件...')
-        self.setBtnsUnabled()
-
+        if self.setBtnsUnabled():
+            self.updateStatus(f'开始整合{len(self.excelPathList)}个Excel文件...')
+        
     def mergeExcelEnd(self):
         self.excelPathList = []
         self.clickbtn_clearExcel()
@@ -183,11 +189,16 @@ class ExcelWindow(QWidget):
         self.status_label.setText(msg)
 
     def setBtnsUnabled(self):
-        self.btn_mergeExcel.setEnabled(False)
-        self.btn_addExcel.setEnabled(False)
-        self.btn_deleteExcel.setEnabled(False)
-        self.btn_clearExcel.setEnabled(False)
-        self.btn_openMergeExcelDir.setEnabled(False)
+        try:
+            #FIXME:无法将按钮设置成不可用
+            self.btn_mergeExcel.setEnabled(False)
+            self.btn_addExcel.setEnabled(False)
+            self.btn_deleteExcel.setEnabled(False)
+            self.btn_clearExcel.setEnabled(False)
+            self.btn_openMergeExcelDir.setEnabled(False)
+            return True
+        except:
+            return False
 
     def setBtnsEnabled(self):
         self.btn_addExcel.setEnabled(True)
@@ -195,9 +206,10 @@ class ExcelWindow(QWidget):
         self.btn_clearExcel.setEnabled(True)
         self.btn_openMergeExcelDir.setEnabled(True)
 
-if __name__ == "__main__":
-    
-    app = QApplication(sys.argv)
-    win = ExcelWindow()
-    win.show()
-    sys.exit(app.exec_())
+    def showMessageBox(self, errMsg):
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle('错误')
+        msgBox.setWindowIcon(QIcon('images/favicon.ico'))
+        msgBox.setText(f"友情提示：{len(errMsg)}个文件添加错误了！请重试！请使用钉钉【员工健康】导出的原始文件！")
+        msgBox.setDetailedText('\n\n'.join(errMsg))
+        return msgBox
