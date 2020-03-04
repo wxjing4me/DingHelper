@@ -6,26 +6,29 @@ from PyQt5.QtCore import QUrl, Qt, QThread, QDateTime
 from os import getcwd as os_getcwd, system as os_system
 from os.path import split as ospath_split, normpath as ospath_normpath
 from time import strftime as time_strftime, localtime as time_localtime
-from shutil import copyfile
 
-from functions.tencent_api import testApiToken
+from functions.tencent_api import testApiKey
 from functions.excel_action import testSpectExcel
 from functions.analyse import AnalyseWorker
 from functions.draw_map import DrawMapWorker
+
+from functions.logging_setting import Log
+
+log = Log(__name__).getLog()
 
 class MainWindow(QMainWindow):
     def __init__(self):
        super().__init__()
 
-       self.ApiTokenOK = False
-       self.ApiToken = ''
+       self.ApiKeyOK = False
+       self.ApiKey = ''
        self.MapsDir = ''
        self.excelPath = ''
 
        self.initUI()
 
     def initUI(self):
-
+        
         font_Yahei = QFont("Microsoft YaHei")
 
         self.setWindowTitle('钉钉数据分析小程序')
@@ -39,25 +42,25 @@ class MainWindow(QMainWindow):
         layout_main = QVBoxLayout()
         widget_main.setLayout(layout_main)
         
-        widget_setToken = QWidget()
+        widget_setKey = QWidget()
 
-        layout_setToken = QHBoxLayout()
+        layout_setKey = QHBoxLayout()
 
-        label_setToken = QLabel('腾讯地图API Key：')
-        self.input_setToken = QLineEdit(self)
-        self.input_setToken.setPlaceholderText('XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX')
-        self.input_setToken.returnPressed.connect(self.label_Enter)
+        label_setKey = QLabel('腾讯地图API Key：')
+        self.input_setKey = QLineEdit(self)
+        self.input_setKey.setPlaceholderText('XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX')
+        self.input_setKey.returnPressed.connect(self.label_Enter)
         
-        self.btn_setToken = QPushButton('设置Key')
-        self.btn_setToken.clicked.connect(self.clickBtn_setToken)
+        self.btn_setKey = QPushButton('设置Key')
+        self.btn_setKey.clicked.connect(self.clickBtn_setKey)
         
-        widget_setToken.setLayout(layout_setToken)
+        widget_setKey.setLayout(layout_setKey)
 
-        layout_setToken.addWidget(label_setToken)
-        layout_setToken.addWidget(self.input_setToken)
-        layout_setToken.addWidget(self.btn_setToken)
+        layout_setKey.addWidget(label_setKey)
+        layout_setKey.addWidget(self.input_setKey)
+        layout_setKey.addWidget(self.btn_setKey)
 
-        layout_main.addWidget(widget_setToken)
+        layout_main.addWidget(widget_setKey)
 
         widget_opt = QWidget()
         layout_opt = QHBoxLayout()
@@ -72,12 +75,18 @@ class MainWindow(QMainWindow):
 
         self.btn_selectExcel = QPushButton('选择文件')
         self.btn_selectExcel.clicked.connect(self.clickbtn_selectExcel)
+        self.btn_selectExcel.setToolTip("<b>Excel格式如下：</b><br><img src='./docs/page3.png'>")
         layout_buttons.addWidget(self.btn_selectExcel)
 
         self.btn_startAnalyse = QPushButton('分析位移')
         self.btn_startAnalyse.clicked.connect(self.clickbtn_startAnalyse)
         self.btn_startAnalyse.setEnabled(False)
         layout_buttons.addWidget(self.btn_startAnalyse)
+
+        self.btn_stopAnalyse = QPushButton('停止分析')
+        self.btn_stopAnalyse.clicked.connect(self.clickbtn_stopAnalyse)
+        self.btn_stopAnalyse.setEnabled(False)
+        layout_buttons.addWidget(self.btn_stopAnalyse)
 
         self.btn_drawMap = QPushButton('生成地图')
         self.btn_drawMap.clicked.connect(self.clickBtn_drawMap)
@@ -117,18 +126,18 @@ class MainWindow(QMainWindow):
 
         layout_main.addWidget(widget_status)
 
-    def clickBtn_setToken(self):
-        self.ApiToken = self.input_setToken.text()
-        print('设置个Token值：%s' % self.ApiToken)
-        res = testApiToken(self.ApiToken)
+    def clickBtn_setKey(self):
+        self.ApiKey = self.input_setKey.text()
+        print('设置个Key值：%s' % self.ApiKey)
+        res = testApiKey(self.ApiKey)
         if res['code'] == 1:
-            self.ApiTokenOK = True
+            self.ApiKeyOK = True
             self.updateOutput(res['msg'])
-            self.input_setToken.setEnabled(False)
-            self.btn_setToken.setEnabled(False)
+            self.input_setKey.setEnabled(False)
+            self.btn_setKey.setEnabled(False)
             self.btn_selectExcel.setEnabled(True)
         else:
-            self.input_setToken.setText('')
+            self.input_setKey.setText('')
             self.updateOutput(res['msg'])
 
     def clickbtn_selectExcel(self):
@@ -145,7 +154,7 @@ class MainWindow(QMainWindow):
 
     def clickbtn_startAnalyse(self):
 
-        if self.ApiTokenOK and self.excelPath != '':
+        if self.ApiKeyOK and self.excelPath != '':
             self.updateOutput(f'开始分析...{self.excelPath}', True)
             self.btn_startAnalyse.setEnabled(False)
             self.btn_mergeExcel.setEnabled(False)
@@ -155,9 +164,14 @@ class MainWindow(QMainWindow):
         else:
             self.updateOutput('提示：请先设置腾讯地图API开发者密钥（Key）~')
 
+    def clickbtn_stopAnalyse(self):
+        #TODO:停止键
+        print('按下了停止键')
+        pass
+
     def clickBtn_output(self):
         now = time_strftime("%Y-%m-%d-%H-%M-%S", time_localtime())
-        log_file, _ = QFileDialog.getSaveFileName(self, '保存日志文件', '%s.txt' % now)
+        log_file, _ = QFileDialog.getSaveFileName(self, '保存结果文件', '%s.txt' % now)
         if len(log_file.strip()) != 0:
             with open(log_file, 'w+') as f:
                 f.write(self.output.toPlainText())
@@ -173,7 +187,7 @@ class MainWindow(QMainWindow):
         QDesktopServices.openUrl(QUrl('https://docs.qq.com/doc/DZmJTeUZqYll2U2tR'))
 
     def startAnalyse(self):
-        self.analyseWorker = AnalyseWorker(self.ApiToken, self.excelPath) 
+        self.analyseWorker = AnalyseWorker(self.ApiKey, self.excelPath) 
         self.analyseThread = QThread()
 
         self.analyseWorker._signal.connect(self.updateOutput)
@@ -218,12 +232,12 @@ class MainWindow(QMainWindow):
         self.output.append(msg)
 
     def label_Enter(self):
-        x = self.input_setToken.text().strip()
+        x = self.input_setKey.text().strip()
         if len(x) == 6:
             key = '77NBZ-AAKCF-TXIJR-JMWWH-JZ6QS-UWBIT'
             code = str.maketrans(x.upper(), 'LOVEPY')
             tip = key.translate(code)
-            self.input_setToken.setText(tip)
+            self.input_setKey.setText(tip)
 
     def showMessageBox(self):
         msgBox = QMessageBox()

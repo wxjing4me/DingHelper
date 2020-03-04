@@ -8,9 +8,9 @@
 
 ![主界面](https://github.com/wxjing4me/DingHelper/blob/master/docs/page1.png)
 
-### 整合文件界面
+### 生成位置文件界面
 
-![整合文件界面](https://github.com/wxjing4me/DingHelper/blob/master/docs/page2.png)
+![生成位置文件界面](https://github.com/wxjing4me/DingHelper/blob/master/docs/page2.png)
 
 ## 功能
 
@@ -34,7 +34,9 @@
 
 * 运行在Windows下最佳
 
-## Dependencies
+## Development
+
+### Dependencies
 
 - Python 3.6
 - pyecharts
@@ -61,6 +63,16 @@
 > python app.py
 ```
 
-## Help
+### Package into exe
+
+1. Use pyinstaller
+
+```
+> pyinstaller -w -i images/favicon.ico -p D:\Anaconda3\envs\py36\Lib\site-packages -D app.py windows/excelWin.py windows/MainWin.py functions/analyse.py functions/draw_map.py functions/excel_action.py functions/tencent_api.py
+```
+
+2. copy `.../Lib/site-packages/pyecharts` et al. to `DingHelper/dist/app`
+
+## 帮助文档
 
 > https://docs.qq.com/doc/DZmJTeUZqYll2U2tR

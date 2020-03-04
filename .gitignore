@@ -4,6 +4,7 @@
 /windows/__pycache__/
 /functions/__pycache__/
 /excels/
+/logs/*.log
 helpMyself.md
 app.spec
 requirements.txt

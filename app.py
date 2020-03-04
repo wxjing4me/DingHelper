@@ -4,6 +4,10 @@ from windows.MainWin import MainWindow
 from windows.ExcelWin import ExcelWindow
 import sys
 
+from functions.logging_setting import Log
+
+log = Log(__name__).getLog()
+
 if __name__ == "__main__":
     
     app = QApplication(sys.argv)

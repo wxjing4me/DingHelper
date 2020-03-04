@@ -31,9 +31,9 @@ START_ROW = 1 # default:1
 global REQ_CNT
 
 class AnalyseWorker(QObject):
-    def __init__(self, apiToken='', excelPath=''):
+    def __init__(self, apiKey='', excelPath=''):
         super().__init__()
-        self.apiToken = apiToken
+        self.apiKey = apiKey
         self.excelPath = excelPath
 
     _finished = pyqtSignal()
@@ -64,7 +64,7 @@ class AnalyseWorker(QObject):
             # print(location)
             longitude, latitude, _ = location
             try:
-                response = requests_get('%s%s,%s&key=%s' % (API_URL_LL2Address, latitude, longitude, self.apiToken))
+                response = requests_get('%s%s,%s&key=%s' % (API_URL_LL2Address, latitude, longitude, self.apiKey))
                 REQ_CNT += 1
             except Exception as e:
                 # self._signal.emit('ERROR: request请求错误: %s' % e)

@@ -161,8 +161,9 @@ class ExcelWindow(QWidget):
             self.mergeExcelEnd()
 
     def clickbtn_openMergeExcelDir(self):
-        excelDir = os_path_normpath(self.excelDir)
-        os_system("explorer.exe %s" % excelDir)
+        if self.excelDir != '':
+            excelDir = os_path_normpath(self.excelDir)
+            os_system("explorer.exe %s" % excelDir)
 
     def mergeExcel(self):
 

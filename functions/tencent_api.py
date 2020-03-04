@@ -2,18 +2,18 @@
 from json import loads as json_loads
 from requests import get as requests_get
 
-def testApiToken(token):
-    token = token.strip()
+def testApiKey(key):
+    key = key.strip()
     testRes = {}
-    if len(token) == 0:
+    if len(key) == 0:
         testRes['code'] = 0
         testRes['msg'] = '提示：Key值不能为空'
         return testRes
-    elif len(token) != 35:
+    elif len(key) != 35:
         testRes['code'] = 0
         testRes['msg'] = '提示：Key格式有误！'
         return testRes
-    url = 'https://apis.map.qq.com/ws/location/v1/ip?key=%s' % token
+    url = 'https://apis.map.qq.com/ws/location/v1/ip?key=%s' % key
     try:
         response = requests_get(url)
     except:
