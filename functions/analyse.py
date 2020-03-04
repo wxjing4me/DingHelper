@@ -160,7 +160,7 @@ class AnalyseWorker(QObject):
                 todayAddress = self.getAddressByLL(location)
             cRes = self.compareAdress(yesterAddress, todayAddress)
             if cRes['type'] != STR_STAY:
-                self._signal.emit('>> %s - %s %s\n高德：%s \n钉钉：%s -> %s' % (yesterDate, todayDate, cRes['type'], cRes['amap_msg'], yesterLocation, todayLocation))
+                self._signal.emit('>> %s - %s %s\n腾讯位置：%s \n钉钉位置：%s -> %s' % (yesterDate, todayDate, cRes['type'], cRes['amap_msg'], yesterLocation, todayLocation))
             yesterDate = todayDate
             yesterAddress = todayAddress
             yesterLocation = todayLocation
