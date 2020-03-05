@@ -201,7 +201,7 @@ class AnalyseWorker(QObject):
             else:
                 res = json_loads(response.text)
                 if res['status'] != 0:
-                    log.warn(f"腾讯地图API错误（逆地址解析）: {res['message']}！from={fromLL}&to={toLL};{FJNU_LL}")
+                    log.error(f"腾讯地图API错误（距离计算）: {res['message']}！from={fromLL}&to={toLL};{FJNU_LL}")
                 else:
                     dist = res['result']['elements'][0]['distance']
                     distF = res['result']['elements'][1]['distance']

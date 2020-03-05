@@ -13,6 +13,7 @@ if __name__ == "__main__":
         mainWin = MainWindow()
         excelWin = ExcelWindow()
         mainWin.show()
+        log.critical('App启动成功啦！')
         mainWin.btn_mergeExcel.clicked.connect(excelWin.show)
         sys.exit(app.exec_())
     except Exception as e:
