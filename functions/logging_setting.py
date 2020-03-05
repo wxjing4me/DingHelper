@@ -3,6 +3,7 @@ import logging
 import os
 
 class Log():
+    
     def __init__(self, logger=None):
         # debug, info, warn, error, critical
         self.logger = logging.getLogger(logger)
@@ -10,7 +11,6 @@ class Log():
         formatter = logging.Formatter(fmt='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s : %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         # output to log file
         root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-        #TODO:新建log文件夹和error.log文件
         handler = logging.FileHandler(f'{root_path}/logs/error.log', encoding='utf-8')
         handler.setFormatter(formatter)
         handler.setLevel(level=logging.ERROR)
@@ -19,6 +19,7 @@ class Log():
         console = logging.StreamHandler()
         console.setFormatter(formatter)
         self.logger.addHandler(console)
+
     def getLog(self):
         return self.logger
 

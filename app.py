@@ -6,13 +6,14 @@ import sys
 
 from functions.logging_setting import Log
 
-log = Log(__name__).getLog()
-
 if __name__ == "__main__":
-    
-    app = QApplication(sys.argv)
-    mainWin = MainWindow()
-    excelWin = ExcelWindow()
-    mainWin.show()
-    mainWin.btn_mergeExcel.clicked.connect(excelWin.show)
-    sys.exit(app.exec_())
+    try:
+        log = Log(__name__).getLog()
+        app = QApplication(sys.argv)
+        mainWin = MainWindow()
+        excelWin = ExcelWindow()
+        mainWin.show()
+        mainWin.btn_mergeExcel.clicked.connect(excelWin.show)
+        sys.exit(app.exec_())
+    except Exception as e:
+        log.critical(f'App启动失败 - {e}', exc_info=True)

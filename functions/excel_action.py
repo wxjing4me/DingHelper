@@ -1,6 +1,6 @@
 #-*-coding:utf-8-*-
 from xlrd import open_workbook as xlrd_open_workbook
-import xlsxwriter
+from xlsxwriter import Workbook as xlsxwriter_Workbook
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from functions.logging_setting import Log
 from time import sleep as time_sleep
@@ -23,6 +23,7 @@ def testRawExcel(excel_path):
         excel = xlrd_open_workbook(excel_path)
         sht_names = excel.sheet_names()
         for sht_name in sht_names:
+            log.debug(f'Excel:{excel_path}, Sheet:{sht_name}')
             table = excel.sheet_by_name(sht_name)
             header = table.row_values(0)
             needed = ['提交人', '工号', '当前时间,当前地点']
@@ -33,8 +34,12 @@ def testRawExcel(excel_path):
             else:
                 res['msg'] = f'{excel_path}<{sht_name}>中缺少{needed}的部分字段'
     except Exception as e:
-        res['msg'] = f'测试表格出错了：{e}'
+        res['msg'] = f'Excel表格格式有误！'
+        log.error(f'Excel表格格式有误！ - {e}', exc_info=True)
     finally:
+        if res['msg'] != '':
+            res['code'] = 0
+            log.info(res['msg'])
         return res
 
 def testSpectExcel(excel_path):
@@ -44,6 +49,7 @@ def testSpectExcel(excel_path):
     try:
         excel = xlrd_open_workbook(excel_path)
         table = excel.sheet_by_index(0)
+        # 只用到第一个工作表
         nrows = table.nrows
         ncols = table.ncols
         if nrows == 0 and ncols == 0:
@@ -52,17 +58,19 @@ def testSpectExcel(excel_path):
             reFlag = True
             for i in range(1, nrows):
                 for j in range(2, ncols):
-                    val = eval(table.cell(i, j).value)
-                    if val != '' and val != '-' and not isinstance(val, list):
-                        reFlag = False
-                        break
+                    val = table.cell(i, j).value
+                    if val != '' and val != '-':
+                        val = eval(val)
+                        if not isinstance(val, list):
+                            reFlag = False
+                            break
             if reFlag:
                 res['code'] = 1
         else:
             res['msg'] = '该Excel表格数据量不足，请重新选择文件！'
     except Exception as e:
         res['msg'] = f'该Excel表格格式有误，请重新选择文件！'
-        log.warn(f"{res['msg']} - {e}", exc_info=True)
+        log.error(f"{res['msg']} - {e}", exc_info=True)
     finally:
         if res['msg'] != '':
             log.info(res['msg'])
@@ -88,7 +96,7 @@ def readExcel(excel_path):
                 value = eval(value)
                 value = value[1:4]
             except Exception as e:
-                print(f'eval转换出错：{e}')
+                log.warn(f'eval转换出错：{e}', exc_info=True)
             stuData[header[j]] = value
         stu['data'] = stuData
         stuDatas.append(stu)
@@ -158,9 +166,9 @@ class MergeExcelWorker(QObject):
         self._signal.emit('正在整合Excel...')
         time_sleep(0.5)
         try:
-            excel = xlsxwriter.Workbook(output_excel)
+            excel = xlsxwriter_Workbook(output_excel)
             table = excel.add_worksheet()
-            dates = list(datas.keys())
+            dates = sorted(list(datas.keys()))
             # 设置格式
             table.set_column(0, 1, 15)
             table.set_column(2, len(dates)+1, 31)

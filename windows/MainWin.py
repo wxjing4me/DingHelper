@@ -104,6 +104,7 @@ class MainWindow(QMainWindow):
         layout_opt.addWidget(widget_buttons)
 
         self.output = QTextBrowser(self)
+        self.output.append('提示：从【生成位置文件】开始旅程吧~')
         layout_opt.addWidget(self.output)
         
         layout_main.addWidget(widget_opt)
@@ -128,7 +129,6 @@ class MainWindow(QMainWindow):
 
     def clickBtn_setKey(self):
         self.ApiKey = self.input_setKey.text()
-        print('设置个Key值：%s' % self.ApiKey)
         res = testApiKey(self.ApiKey)
         if res['code'] == 1:
             self.ApiKeyOK = True
