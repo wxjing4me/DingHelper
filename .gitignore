@@ -1,5 +1,6 @@
 /dist/
 /build/
+/include/
 /__pycache__/
 /windows/__pycache__/
 /functions/__pycache__/

@@ -10,7 +10,7 @@ class Log():
         formatter = logging.Formatter(fmt='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s : %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         # output to log file
         root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-        handler = logging.FileHandler(f'{root_path}/logs/result.log')
+        handler = logging.FileHandler(f'{root_path}/logs/error.log', encoding='utf-8')
         handler.setFormatter(formatter)
         handler.setLevel(level=logging.ERROR)
         self.logger.addHandler(handler)

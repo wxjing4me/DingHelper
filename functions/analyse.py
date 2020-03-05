@@ -64,10 +64,10 @@ class AnalyseWorker(QObject):
         address = DEFAULT_Address
         global REQ_CNT
         try:
-            #TODO:location为字符串'-'或空时，直接略过
             longitude, latitude, _ = location
         except Exception as e:
             log.warn(f'location={location}', exc_info=True)
+            return address
         try:
             response = requests_get('%s%s,%s&key=%s' % (API_URL_LL2Address, latitude, longitude, self.apiKey))
             REQ_CNT += 1
