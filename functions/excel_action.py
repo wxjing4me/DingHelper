@@ -6,7 +6,7 @@ from functions.logging_setting import Log
 from time import sleep as time_sleep
 
 # 第1行默认为表头
-START_ROW = 1 # default:1
+START_ROW = 134 # default:1
 
 log = Log(__name__).getLog()
 

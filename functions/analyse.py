@@ -26,9 +26,6 @@ STR_FUZHOU = '福州市'
 STR_FUZHOU_LIST = ['闽侯县', '鼓楼区', '台江区', '晋安区', '仓山区', '马尾区']
 MAX_CNT_PER_SEC = 4
 
-# 第1行默认为表头
-START_ROW = 1 # default:1
-
 global REQ_CNT
 
 log = Log(__name__).getLog()
@@ -66,7 +63,7 @@ class AnalyseWorker(QObject):
         try:
             longitude, latitude, _ = location
         except Exception as e:
-            log.warn(f'location={location}', exc_info=True)
+            log.warn(f'location={location}, 可能原因: 用户未填')
             return address
         try:
             response = requests_get('%s%s,%s&key=%s' % (API_URL_LL2Address, latitude, longitude, self.apiKey))

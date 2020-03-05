@@ -66,13 +66,11 @@
 
 ### Package into exe
 
-1. Use pyinstaller
+* Use pyinstaller
 
 ```
-> pyinstaller -w -i images/favicon.ico -p D:\Anaconda3\envs\py36\Lib\site-packages -D app.py windows/excelWin.py windows/MainWin.py functions/analyse.py functions/draw_map.py functions/excel_action.py functions/tencent_api.py
+> pyinstaller app.spec
 ```
-
-2. copy `.../Lib/site-packages/pyecharts` et al. to `DingHelper/dist/app`
 
 ## 帮助文档
 

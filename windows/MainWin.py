@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
 
         self.btn_selectExcel = QPushButton('选择文件')
         self.btn_selectExcel.clicked.connect(self.clickbtn_selectExcel)
-        self.btn_selectExcel.setToolTip("<b>Excel格式如下：</b><br><img src='./docs/page3.png'>")
+        self.btn_selectExcel.setToolTip("<b>Excel格式如下：</b><br><img src='./images/excel_tip.png'>")
         layout_buttons.addWidget(self.btn_selectExcel)
 
         self.btn_startAnalyse = QPushButton('分析位移')
