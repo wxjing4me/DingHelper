@@ -28,6 +28,8 @@ MAX_CNT_PER_SEC = 4
 
 global REQ_CNT
 
+SPLIT_CHAR = '='  # 工号=提交人
+
 log = Log(__name__).getLog()
 
 class AnalyseWorker(QObject):
@@ -35,6 +37,7 @@ class AnalyseWorker(QObject):
         super().__init__()
         self.apiKey = apiKey
         self.excelPath = excelPath
+        self.stopFlag = False
 
     _finished = pyqtSignal()
     _signal = pyqtSignal(str)
@@ -51,7 +54,13 @@ class AnalyseWorker(QObject):
             # print(aStuData)
             self.aStuAnalyse(aStuData)
             stu_count += 1
+            if self.stopFlag:
+                break
         self._finished.emit()
+
+    @pyqtSlot()
+    def stop(self):
+        self.stopFlag = True
 
     '''
     逆地址解析
@@ -65,6 +74,9 @@ class AnalyseWorker(QObject):
         except Exception as e:
             log.warn(f'location={location}, 可能原因: 用户未填')
             return address
+        if longitude == '' or latitude == '':
+            self._signal.emit('提示：该位置是手动输入，非自动定位')
+            return address
         try:
             response = requests_get('%s%s,%s&key=%s' % (API_URL_LL2Address, latitude, longitude, self.apiKey))
             REQ_CNT += 1
@@ -76,10 +88,8 @@ class AnalyseWorker(QObject):
             log.error(f'获取腾讯地图地址失败: status_code={response.status_code}', exc_info=True)
         else:
             res = json_loads(response.text)
-            #TODO:加个判断: 若经纬度为空，则非自动定位
             if res['status'] != 0:
-                self._signal.emit('提示：该位置是手动输入，非自动定位')
-                log.warn(f"腾讯地图API错误（逆地址解析）: {res['message']}！location={location} - 可能情况为：由于无法获取地理位置，该位置是手动输入，非自动定位")
+                log.warn(f"腾讯地图API错误（逆地址解析）: {res['message']}！location={location}")
             else:
                 address = res['result']['address_component']
         if REQ_CNT % MAX_CNT_PER_SEC == 0:
@@ -138,10 +148,10 @@ class AnalyseWorker(QObject):
 
     def aStuAnalyse(self, aStuData):
     
-        sinfo = aStuData['info']
+        sno, sname = aStuData['info'].split(SPLIT_CHAR)
         sdata = aStuData['data']
 
-        self._signal.emit('%s' % sinfo)
+        self._signal.emit(f'{sno} {sname}')
 
         yesterDate, yesterAddress = '', ''
         for date, location in sdata.items():

@@ -6,7 +6,9 @@ from functions.logging_setting import Log
 from time import sleep as time_sleep
 
 # 第1行默认为表头
-START_ROW = 134 # default:1
+START_ROW = 1 # default:1
+
+SPLIT_CHAR = '='  # 工号=提交人
 
 log = Log(__name__).getLog()
 
@@ -23,7 +25,7 @@ def testRawExcel(excel_path):
         for sht_name in sht_names:
             table = excel.sheet_by_name(sht_name)
             header = table.row_values(0)
-            needed = ['提交人', '工号', '填写周期', '当前时间,当前地点']
+            needed = ['提交人', '工号', '当前时间,当前地点']
             if len(header) != 0 and set(header) >= set(needed):
                 res['code'] = 1
             elif len(header) == 0:
@@ -41,20 +43,29 @@ def testSpectExcel(excel_path):
     res['msg'] = ''
     try:
         excel = xlrd_open_workbook(excel_path)
-        sht_names = excel.sheet_names()
-        for sht_name in sht_names:
-            table = excel.sheet_by_name(sht_name)
-            date_header = table.row_values(0)[1:]
-            #TODO:判断表头格式符合【x月x日】的格式
-            if len(date_header) > 1:
+        table = excel.sheet_by_index(0)
+        nrows = table.nrows
+        ncols = table.ncols
+        if nrows == 0 and ncols == 0:
+            res['msg'] = f'该Excel为空表，请重新选择文件！'
+        elif nrows >= 2 and ncols >= 4:
+            reFlag = True
+            for i in range(1, nrows):
+                for j in range(2, ncols):
+                    val = eval(table.cell(i, j).value)
+                    if val != '' and val != '-' and not isinstance(val, list):
+                        reFlag = False
+                        break
+            if reFlag:
                 res['code'] = 1
-            elif len(date_header) == 0:
-                res['msg'] = f'请删除空表：{excel_path}<{sht_name}>后重试'
-            else:
-                res['msg'] = f'{excel_path}<{sht_name}>中格式出错'
+        else:
+            res['msg'] = '该Excel表格数据量不足，请重新选择文件！'
     except Exception as e:
-        res['msg'] = f'测试表格出错了：{e}'
+        res['msg'] = f'该Excel表格格式有误，请重新选择文件！'
+        log.warn(f"{res['msg']} - {e}", exc_info=True)
     finally:
+        if res['msg'] != '':
+            log.info(res['msg'])
         return res
 
 def readExcel(excel_path):
@@ -69,9 +80,9 @@ def readExcel(excel_path):
     # print(header)
     for i in range(START_ROW, nrow):
         stu = {}
-        stu['info'] = table.cell(i,0).value
+        stu['info'] = SPLIT_CHAR.join((table.cell(i,0).value, table.cell(i, 1).value))
         stuData = {}
-        for j in range(1, len(header)):
+        for j in range(2, len(header)):
             value = table.cell(i,j).value
             try:
                 value = eval(value)
@@ -115,21 +126,23 @@ class MergeExcelWorker(QObject):
                 tables = excel.sheets()
                 for table in tables:
                     header = table.row_values(0)
-                    # 钉钉打卡导出结果中必有【工号】【提交人】【填写周期】【当前时间,当前地点】
+                    # 钉钉打卡导出结果中必有【工号】【提交人】【当前时间,当前地点】
                     idx_sno = header.index('工号')
                     idx_sname = header.index('提交人')
-                    idx_date = header.index('填写周期')
-                    #FIXME:填写周期不准确
                     idx_location = header.index('当前时间,当前地点')
                     for i in range(1, len(table.col_values(0))):
-                        sinfo = f'{table.cell(i, idx_sno).value} {table.cell(i, idx_sname).value}'
+                        sinfo = f'{table.cell(i, idx_sno).value}{SPLIT_CHAR}{table.cell(i, idx_sname).value}'
                         if sinfo not in stuInfos:
                             stuInfos.append(sinfo)
-                        sdate = table.cell(i, idx_date).value
                         str_location = table.cell(i, idx_location).value
-                        if sdate not in datas:
-                            datas[sdate] = {}
-                        datas[sdate][sinfo] = str_location
+                        if str_location != '-':
+                            try:
+                                sdate = eval(str_location)[0][:10]
+                                if sdate not in datas:
+                                    datas[sdate] = {}
+                                datas[sdate][sinfo] = str_location
+                            except Exception as e:
+                                log.warn(f'{e}', exc_info=True)
             except Exception as e:
                 log.warn(f'读取{excel_path}出错: {e}', exc_info = True)
         # 补充遗漏的学生数据
@@ -149,21 +162,25 @@ class MergeExcelWorker(QObject):
             table = excel.add_worksheet()
             dates = list(datas.keys())
             # 设置格式
-            table.set_column(0, len(dates), 31)
+            table.set_column(0, 1, 15)
+            table.set_column(2, len(dates)+1, 31)
             format_header = excel.add_format({'bold': True, 'font_name': '微软雅黑', 'font_size': 10, 'text_wrap': True, 'valign': 'top'})
             format_cell = excel.add_format({'font_name': '微软雅黑', 'font_size': 10, 'text_wrap': True, 'valign': 'top'})
             # 写入表头
-            table.write(0, 0, '提交人', format_header)
+            table.write(0, 0, '工号', format_header)
+            table.write(0, 1, '提交人', format_header)
             for ki in range(len(datas.keys())):
                 m, d = [int(i) for i in dates[ki][-5:].split('-')]
-                dateStr = f"'{m}月{d}日"
-                table.write(0, ki+1, dateStr, format_header)
+                dateStr = f"{m}月{d}日"
+                table.write(0, ki+2, dateStr, format_header)
             # 依次写入提交人及位置
             for si in range(len(stuInfos)):
                 info = stuInfos[si]
-                table.write(si+1, 0, info, format_cell)
+                sno, sname = info.split(SPLIT_CHAR)
+                table.write(si+1, 0, sno, format_cell)
+                table.write(si+1, 1, sname, format_cell)
                 for di in range(len(dates)):
-                    table.write(si+1, di+1, datas[dates[di]][info], format_cell)
+                    table.write(si+1, di+2, datas[dates[di]][info], format_cell)
         except Exception as e:
             self._signal.emit(f'表格创建失败:{e}')
             log.error(f'创建{output_excel}失败: {e}', exc_info=True)

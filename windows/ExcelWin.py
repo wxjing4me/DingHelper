@@ -113,7 +113,7 @@ class ExcelWindow(QWidget):
     
 
     def testBtn_mergeExcel(self):
-        if len(self.excelPathList) >= 1:
+        if len(self.excelPathList) >= 2:
             return True
         else:
             return False

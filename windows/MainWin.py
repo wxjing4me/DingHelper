@@ -150,13 +150,14 @@ class MainWindow(QMainWindow):
                 self.btn_startAnalyse.setEnabled(True)
                 self.btn_drawMap.setEnabled(True)
             else:
-                self.showMessageBox().exec()
+                self.showMessageBox(testRes['msg']).exec()
 
     def clickbtn_startAnalyse(self):
 
         if self.ApiKeyOK and self.excelPath != '':
             self.updateOutput(f'开始分析...{self.excelPath}', True)
             self.btn_startAnalyse.setEnabled(False)
+            self.btn_stopAnalyse.setEnabled(True)
             self.btn_mergeExcel.setEnabled(False)
             self.btn_selectExcel.setEnabled(False)
             self.btn_drawMap.setEnabled(False)
@@ -165,9 +166,8 @@ class MainWindow(QMainWindow):
             self.updateOutput('提示：请先设置腾讯地图API开发者密钥（Key）~')
 
     def clickbtn_stopAnalyse(self):
-        #TODO:停止键
-        print('按下了停止键')
-        pass
+        self.analyseWorker.stop()
+        self.analyseThread.quit()
 
     def clickBtn_output(self):
         now = time_strftime("%Y-%m-%d-%H-%M-%S", time_localtime())
@@ -199,7 +199,9 @@ class MainWindow(QMainWindow):
         self.analyseThread.start()
 
     def startAnalyseEnd(self):
+        self.analyseThread.quit()
         self.updateOutput('分析结束！可以点击【导出结果】存档~', True)
+        self.btn_stopAnalyse.setEnabled(False)
         self.btn_startAnalyse.setEnabled(True)
         self.btn_mergeExcel.setEnabled(True)
         self.btn_selectExcel.setEnabled(True)
@@ -239,9 +241,9 @@ class MainWindow(QMainWindow):
             tip = key.translate(code)
             self.input_setKey.setText(tip)
 
-    def showMessageBox(self):
+    def showMessageBox(self, msg):
         msgBox = QMessageBox()
         msgBox.setWindowTitle('错误')
         msgBox.setWindowIcon(QIcon('images/favicon.ico'))
-        msgBox.setText(f"友情提示：选择的文件不符合格式要求！请重试！建议使用【生成位置文件】进行生成")
+        msgBox.setText(f"友情提示：{msg}\n建议使用【生成位置文件】进行生成")
         return msgBox
