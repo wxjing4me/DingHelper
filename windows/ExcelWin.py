@@ -36,7 +36,7 @@ class ExcelWindow(QWidget):
         widget_intro = QWidget()
         layout_intro = QVBoxLayout()
 
-        label_intro = QLabel('说明：添加的文件必须是从钉钉【员工健康】中导出的原始数据表')
+        label_intro = QLabel('说明：添加的文件必须是从钉钉【员工健康】中导出的原始数据表\n  至少添加2个文件哦！')
         
         widget_intro.setLayout(layout_intro)
 
