@@ -96,7 +96,7 @@ def readExcel(excel_path):
                 value = eval(value)
                 value = value[1:4]
             except Exception as e:
-                log.warn(f'eval转换出错：{e}', exc_info=True)
+                log.debug(f'eval转换出错：{e}', exc_info=True)
             stuData[header[j]] = value
         stu['data'] = stuData
         stuDatas.append(stu)

@@ -230,7 +230,7 @@ class MainWindow(QMainWindow):
     def updateOutput(self, msg, showTime=False):
         if showTime:
             now = QDateTime.currentDateTime().toString('yyyy-MM-dd hh:mm:ss')
-            self.output.append(now)
+            self.output.append(f"<span style='color:blue'>{now}</span>")
         self.output.append(msg)
 
     def label_Enter(self):
