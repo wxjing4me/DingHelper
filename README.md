@@ -41,14 +41,15 @@
 - Python 3.6
 - pyecharts
 - PyQt5
-- xlrd / xlwings
+- xlrd / xlsxwriter
 
 ### Installation
 
 ```
 ~$ pip install pyecharts
 ~$ pip install PyQt5
-~$ pip install xlwings
+~$ pip install xlrd
+~$ pip install XlsxWriter
 ```
 
 * PyQt5-5.14.1-5.14.1-cp35.cp36.cp37.cp38-none-win_amd64.whl

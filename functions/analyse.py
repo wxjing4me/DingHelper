@@ -5,6 +5,7 @@ from functions.excel_action import readExcel
 from requests import get as requests_get
 from json import loads as json_loads
 from time import sleep as time_sleep
+from functions.logging_setting import Log
 
 DEFAULT_Address = {'nation': '未知'}
 DEFAULT_Location = [20, 80, "未知"]
@@ -29,6 +30,8 @@ MAX_CNT_PER_SEC = 4
 START_ROW = 1 # default:1
 
 global REQ_CNT
+
+log = Log(__name__).getLog()
 
 class AnalyseWorker(QObject):
     def __init__(self, apiKey='', excelPath=''):
@@ -61,27 +64,29 @@ class AnalyseWorker(QObject):
         address = DEFAULT_Address
         global REQ_CNT
         try:
-            # print(location)
+            #TODO:location为字符串'-'或空时，直接略过
             longitude, latitude, _ = location
-            try:
-                response = requests_get('%s%s,%s&key=%s' % (API_URL_LL2Address, latitude, longitude, self.apiKey))
-                REQ_CNT += 1
-            except Exception as e:
-                # self._signal.emit('ERROR: request请求错误: %s' % e)
-                print('ERROR: request请求错误: %s' % e)
-            if response.status_code != 200:
-                self._signal.emit('ERROR: %d 获取腾讯地图地址失败' % response.status_code)
-            else:
-                res = json_loads(response.text)
-                if res['status'] != 0:
-                    self._signal.emit('提示：该位置是手动输入，非自动定位')
-                    print(f"ERROR: 腾讯地图API错误（逆地址解析）：{res['message']}！可能情况为：由于无法获取地理位置，该位置是手动输入，非自动定位")
-                else:
-                    address = res['result']['address_component']
-            if REQ_CNT % MAX_CNT_PER_SEC == 0:
-                time_sleep(1)
         except Exception as e:
-            print(f'getAddressByLL警告：{e}')
+            log.warn(f'location={location}', exc_info=True)
+        try:
+            response = requests_get('%s%s,%s&key=%s' % (API_URL_LL2Address, latitude, longitude, self.apiKey))
+            REQ_CNT += 1
+        except Exception as e:
+            # self._signal.emit('ERROR: request请求错误: %s' % e)
+            log.error(f'ERROR: request请求错误: {e}', exc_info=True)
+        if response.status_code != 200:
+            self._signal.emit('ERROR: %d 获取腾讯地图地址失败' % response.status_code)
+            log.error(f'获取腾讯地图地址失败: status_code={response.status_code}', exc_info=True)
+        else:
+            res = json_loads(response.text)
+            #TODO:加个判断: 若经纬度为空，则非自动定位
+            if res['status'] != 0:
+                self._signal.emit('提示：该位置是手动输入，非自动定位')
+                log.warn(f"腾讯地图API错误（逆地址解析）: {res['message']}！location={location} - 可能情况为：由于无法获取地理位置，该位置是手动输入，非自动定位")
+            else:
+                address = res['result']['address_component']
+        if REQ_CNT % MAX_CNT_PER_SEC == 0:
+            time_sleep(1)
         return address
 
     def compareAdress(self, yesterAddress, todayAddress):

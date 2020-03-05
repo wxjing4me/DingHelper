@@ -1,10 +1,14 @@
 #-*-coding:utf-8-*-
 from xlrd import open_workbook as xlrd_open_workbook
-import xlwings as xw
+import xlsxwriter
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
+from functions.logging_setting import Log
+from time import sleep as time_sleep
 
 # 第1行默认为表头
 START_ROW = 1 # default:1
+
+log = Log(__name__).getLog()
 
 '''
 判断Excel格式是否符合【每日健康打卡】
@@ -98,8 +102,6 @@ class MergeExcelWorker(QObject):
         self.generateNewExcel(datas, stuInfos, self.excelOutput)
 
     def handleExcels(self, excel_list):
-        xwApp = xw.App(visible=False, add_book=False)
-
         datas = {}
         stuInfos = []
         count = 0
@@ -107,106 +109,67 @@ class MergeExcelWorker(QObject):
         for excel_path in excel_list:
             count += 1
             try:
-                excel = xwApp.books.open(excel_path)
+                excel = xlrd_open_workbook(excel_path)
                 self._signal.emit(f'正在处理 {count}/{total}：{excel_path}')
-                tables = excel.sheets
+                time_sleep(0.5)
+                tables = excel.sheets()
                 for table in tables:
-                    header = table.range('A1').expand('horizontal').value
+                    header = table.row_values(0)
                     # 钉钉打卡导出结果中必有【工号】【提交人】【填写周期】【当前时间,当前地点】
-                    idx_sno = header.index('工号') + 1
-                    idx_sname = header.index('提交人') + 1
-                    idx_date = header.index('填写周期') + 1
-                    idx_location = header.index('当前时间,当前地点') + 1
-                    last_row = len(table.range(2, idx_sname).expand('vertical').value) + 2
-                    for i in range(2, last_row):
-                        sinfo = f'{table.range(i, idx_sno).value} {table.range(i, idx_sname).value}'
+                    idx_sno = header.index('工号')
+                    idx_sname = header.index('提交人')
+                    idx_date = header.index('填写周期')
+                    #FIXME:填写周期不准确
+                    idx_location = header.index('当前时间,当前地点')
+                    for i in range(1, len(table.col_values(0))):
+                        sinfo = f'{table.cell(i, idx_sno).value} {table.cell(i, idx_sname).value}'
                         if sinfo not in stuInfos:
                             stuInfos.append(sinfo)
-                        sdate = table.range(i, idx_date).value
-                        str_location = table.range(i, idx_location).value
+                        sdate = table.cell(i, idx_date).value
+                        str_location = table.cell(i, idx_location).value
                         if sdate not in datas:
                             datas[sdate] = {}
                         datas[sdate][sinfo] = str_location
             except Exception as e:
-                print(f'读取Excel出错：{e}')
-            finally:
-                try:
-                    excel.close()
-                    xwApp.quit()
-                except Exception as e:
-                    print(f'关闭Excel出错：{e}')
+                log.warn(f'读取{excel_path}出错: {e}', exc_info = True)
         # 补充遗漏的学生数据
         for date, dateData in datas.items():
+            log.info(f'日期: {date}, 人员数: {len(datas[date])}')
             for stu in stuInfos:
                 if stu not in datas[date]:
                     datas[date][stu] = '-'
-    
         return datas, stuInfos
 
 
     def generateNewExcel(self, datas, stuInfos, output_excel):
-        # 写入一个新的Excel表中
-        resHeader = ['提交人'] + sorted(datas.keys())
-        dataToWrite = []
-        for i in range(len(stuInfos)):
-            stu = stuInfos[i]
-            stu_locs = [stu]
-            for j in range(1, len(resHeader)):
-                stu_locs.append(datas[resHeader[j]][stu])
-            dataToWrite.append(stu_locs)
-
         self._signal.emit('正在整合Excel...')
-        xwApp = xw.App(visible=False, add_book=True)
-        wb = xwApp.books(1)
-        sht = wb.sheets(1)
-        colcnt = len(resHeader)
-        # 处理表头
-        for i in range(1, len(resHeader)):
-            m, d = [int(i) for i in resHeader[i][-5:].split('-')]
-            resHeader[i] = f"'{m}月{d}日"
-        lastCol = chr(ord("A")+colcnt-1) 
+        time_sleep(0.5)
         try:
-            sht.range(f'A1:{lastCol}1').column_width = 31
-            sht.range(f'A1:{lastCol}1').api.Font.Bold = True
-            sht.range('A1').value = resHeader
-            sht.range('A2').value = dataToWrite
-            sht.range('A2').rows.autofit()
-            sht.range(f'A:{lastCol}').api.VerticalAlignment = -4130 #自动换行
-            sht.range(f'A:{lastCol}').api.Font.Name = '微软雅黑'
-            sht.range(f'A:{lastCol}').api.Font.Size = 10
-            wb.save(output_excel)
-            self._finished.emit()
+            excel = xlsxwriter.Workbook(output_excel)
+            table = excel.add_worksheet()
+            dates = list(datas.keys())
+            # 设置格式
+            table.set_column(0, len(dates), 31)
+            format_header = excel.add_format({'bold': True, 'font_name': '微软雅黑', 'font_size': 10, 'text_wrap': True, 'valign': 'top'})
+            format_cell = excel.add_format({'font_name': '微软雅黑', 'font_size': 10, 'text_wrap': True, 'valign': 'top'})
+            # 写入表头
+            table.write(0, 0, '提交人', format_header)
+            for ki in range(len(datas.keys())):
+                m, d = [int(i) for i in dates[ki][-5:].split('-')]
+                dateStr = f"'{m}月{d}日"
+                table.write(0, ki+1, dateStr, format_header)
+            # 依次写入提交人及位置
+            for si in range(len(stuInfos)):
+                info = stuInfos[si]
+                table.write(si+1, 0, info, format_cell)
+                for di in range(len(dates)):
+                    table.write(si+1, di+1, datas[dates[di]][info], format_cell)
         except Exception as e:
             self._signal.emit(f'表格创建失败:{e}')
+            log.error(f'创建{output_excel}失败: {e}', exc_info=True)
         finally:
-            wb.close()
-            xwApp.quit()
-
-    def handleExcelsByXlwt(self, excel_list):
-        datas = {}
-        stuInfos = []
-        for excel_path in excel_list:
-            excel = xlrd_open_workbook(excel_path)
-            tables = excel.sheets()
-            for table in tables:
-                header = table.row_values(0)
-                # 钉钉打卡导出结果中必有【工号】【提交人】【填写周期】
-                idx_sno = header.index('工号')
-                idx_sname = header.index('提交人')
-                idx_date = header.index('填写周期')
-                idx_location = header.index('当前时间,当前地点')
-                for i in range(1, table.nrows):
-                    sinfo = f'{table.cell(i, idx_sno).value} {table.cell(i, idx_sname).value}'
-                    if sinfo not in stuInfos:
-                        stuInfos.append(sinfo)
-                    sdate = table.cell(i, idx_date).value
-                    str_location = table.cell(i, idx_location).value
-                    if sdate not in datas:
-                        datas[sdate] = {}
-                    datas[sdate][sinfo] = str_location
-        # print(datas)
-
-        return datas, stuInfos
+            excel.close()
+            self._finished.emit()
 
 
 if __name__ == '__main__':
