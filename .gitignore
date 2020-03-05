@@ -1,6 +1,7 @@
 /dist/
 /build/
 /include/
+/includex32/
 /__pycache__/
 /windows/__pycache__/
 /functions/__pycache__/

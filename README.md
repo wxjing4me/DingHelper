@@ -40,7 +40,8 @@
 
 - Python 3.6
 - pyecharts
-- PyQt5
+- PyQt5 5.14
+- requests
 - xlrd / xlsxwriter
 
 ### Installation
@@ -48,6 +49,7 @@
 ```
 ~$ pip install pyecharts
 ~$ pip install PyQt5
+~$ pip install requests
 ~$ pip install xlrd
 ~$ pip install XlsxWriter
 ```
