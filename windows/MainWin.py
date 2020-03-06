@@ -171,10 +171,10 @@ class MainWindow(QMainWindow):
 
     def clickBtn_output(self):
         now = time_strftime("%Y-%m-%d-%H-%M-%S", time_localtime())
-        log_file, _ = QFileDialog.getSaveFileName(self, '保存结果文件', '%s.txt' % now)
+        log_file, _ = QFileDialog.getSaveFileName(self, '保存结果文件', '%s.html' % now)
         if len(log_file.strip()) != 0:
             with open(log_file, 'w+') as f:
-                f.write(self.output.toPlainText())
+                f.write(self.output.toHtml())
 
     def clickBtn_drawMap(self):
         self.MapsDir = QFileDialog.getExistingDirectory(self, '选择保存地图的文件夹路径', './')
