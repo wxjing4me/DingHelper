@@ -4,8 +4,9 @@
 /includex32/
 /__pycache__/
 /windows/__pycache__/
-/functions/__pycache__/
+/common/__pycache__/
+/config/__pycache__/
 /excels/
-/logs/*.log
+/logs/*
 helpMyself.md
 requirements.txt

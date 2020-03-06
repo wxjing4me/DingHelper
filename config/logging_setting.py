@@ -1,6 +1,9 @@
 #-*-coding:utf-8-*-
 import logging
-import os
+from logging import handlers
+from os import pardir as os_pardir
+from os.path import abspath as os_path_abspath, join as os_path_join, dirname as os_path_dirname
+from re import compile as re_compile
 
 class Log():
     
@@ -14,6 +17,7 @@ class Log():
         handler = handlers.TimedRotatingFileHandler(filename=f"{root_path}/logs/error", encoding='utf-8', when="midnight", interval=1, backupCount=3)
         handler.suffix = "%Y-%m-%d.log"
         handler.extMatch = re_compile(r"^\d{4}-\d{2}-\d{2}.log$")
+        # handler = logging.FileHandler(f'{root_path}/logs/error.log', encoding='utf-8')
         handler.setFormatter(formatter)
         handler.setLevel(level=logging.ERROR)
         self.logger.addHandler(handler)

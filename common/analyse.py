@@ -1,11 +1,11 @@
 #-*-coding:utf-8-*-
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QDateTime
-from functions.excel_action import readExcel
-
 from requests import get as requests_get
 from json import loads as json_loads
 from time import sleep as time_sleep
-from functions.logging_setting import Log
+
+from common.excel_action import readExcel
+from config.logging_setting import Log
 
 DEFAULT_Address = {'nation': '未知'}
 DEFAULT_Location = [20, 80, "未知"]
@@ -52,7 +52,6 @@ class AnalyseWorker(QObject):
         REQ_CNT, REQ_DIS_CNT = 1, 1
         stu_count = 1
         stuDatas = readExcel(self.excelPath)
-        self._signal.emit('共 %d 位学生' % len(stuDatas))
         for aStuData in stuDatas:
             self._signal.emit('- %d / %d ' % (stu_count, len(stuDatas)) + '-' * 100)
             # print(aStuData)

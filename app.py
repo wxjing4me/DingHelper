@@ -4,7 +4,7 @@ from windows.MainWin import MainWindow
 from windows.ExcelWin import ExcelWindow
 import sys
 
-from functions.logging_setting import Log
+from config.logging_setting import Log
 
 if __name__ == "__main__":
     try:

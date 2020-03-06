@@ -2,8 +2,9 @@
 from xlrd import open_workbook as xlrd_open_workbook
 from xlsxwriter import Workbook as xlsxwriter_Workbook
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
-from functions.logging_setting import Log
 from time import sleep as time_sleep
+
+from config.logging_setting import Log
 
 # 第1行默认为表头
 START_ROW = 1 # default:1
@@ -23,7 +24,7 @@ def testRawExcel(excel_path):
         excel = xlrd_open_workbook(excel_path)
         sht_names = excel.sheet_names()
         for sht_name in sht_names:
-            log.debug(f'Excel:{excel_path}, Sheet:{sht_name}')
+            log.debug(f'Doing...Excel:{excel_path}, Sheet:{sht_name}')
             table = excel.sheet_by_name(sht_name)
             header = table.row_values(0)
             needed = ['提交人', '工号', '当前时间,当前地点']
@@ -96,7 +97,7 @@ def readExcel(excel_path):
                 value = eval(value)
                 value = value[1:4]
             except Exception as e:
-                log.debug(f'eval转换出错：{e}', exc_info=True)
+                log.debug(f'eval转换出错：{e} - value={value}')
             stuData[header[j]] = value
         stu['data'] = stuData
         stuDatas.append(stu)

@@ -5,8 +5,8 @@ from pyecharts.globals import ChartType
 from os.path import join as ospath_join
 
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
-from functions.excel_action import readExcel
-from functions.logging_setting import Log
+from common.excel_action import readExcel
+from config.logging_setting import Log
 
 log = Log(__name__).getLog()
 

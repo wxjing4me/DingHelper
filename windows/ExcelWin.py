@@ -7,7 +7,7 @@ from os import getcwd as os_getcwd, system as os_system
 from os.path import split as os_path_split, normpath as os_path_normpath
 from time import strftime as time_strftime, localtime as time_localtime
 
-from functions.excel_action import MergeExcelWorker, testRawExcel
+from common.excel_action import MergeExcelWorker, testRawExcel
 
 class ExcelWindow(QWidget):
     def __init__(self):

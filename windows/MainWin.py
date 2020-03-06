@@ -7,12 +7,12 @@ from os import getcwd as os_getcwd, system as os_system
 from os.path import split as ospath_split, normpath as ospath_normpath
 from time import strftime as time_strftime, localtime as time_localtime
 
-from functions.tencent_api import testApiKey
-from functions.excel_action import testSpectExcel
-from functions.analyse import AnalyseWorker
-from functions.draw_map import DrawMapWorker
+from common.tencent_api import testApiKey
+from common.excel_action import testSpectExcel
+from common.analyse import AnalyseWorker
+from common.draw_map import DrawMapWorker
 
-from functions.logging_setting import Log
+from config.logging_setting import Log
 
 log = Log(__name__).getLog()
 
