@@ -12,6 +12,18 @@
 
 ![生成位置文件界面](https://github.com/wxjing4me/DingHelper/blob/master/docs/page2.png)
 
+### 生成位置文件示例
+
+![生成位置文件示例](https://github.com/wxjing4me/DingHelper/blob/master/docs/page3.png)
+
+### 分析位移结果示例
+
+![分析位移结果示例](https://github.com/wxjing4me/DingHelper/blob/master/docs/page4.png)
+
+### 生成地图示例
+
+![生成地图示例](https://github.com/wxjing4me/DingHelper/blob/master/docs/page5.png)
+
 ## 功能
 
 1. 利用经纬度判断今昨两日的位置变动是否属于【省外入闽】、【外地返榕】、【离闽】、【离榕】等。
@@ -68,12 +80,18 @@
 > python app.py
 ```
 
-### Package into exe
+### Package into exe By PyInstaller
 
-* Use pyinstaller
+* 64bit
 
 ```
 > pyinstaller app.spec
+```
+
+* 32bit
+
+```
+> pyinstaller appx32.spec
 ```
 
 ## 帮助文档
