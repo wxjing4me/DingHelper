@@ -2,6 +2,8 @@
 from json import loads as json_loads
 from requests import get as requests_get
 
+from configure.default_setting import *
+
 def testApiKey(key):
     key = key.strip()
     testRes = {}
@@ -13,7 +15,7 @@ def testApiKey(key):
         testRes['code'] = 0
         testRes['msg'] = '提示：Key格式有误！'
         return testRes
-    url = 'https://apis.map.qq.com/ws/location/v1/ip?key=%s' % key
+    url = f'{API_URL_IP}key={key}'
     try:
         response = requests_get(url)
     except:

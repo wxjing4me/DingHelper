@@ -12,7 +12,8 @@ from common.excel_action import testSpectExcel
 from common.analyse import AnalyseWorker
 from common.draw_map import DrawMapWorker
 
-from config.logging_setting import Log
+from configure.logging_setting import Log
+from configure.default_setting import *
 
 log = Log(__name__).getLog()
 
@@ -32,7 +33,7 @@ class MainWindow(QMainWindow):
         font_Yahei = QFont("Microsoft YaHei")
 
         self.setWindowTitle('钉钉数据分析小程序')
-        self.setWindowIcon(QIcon('images/favicon.ico'))
+        self.setWindowIcon(QIcon(APP_ICON_PATH))
         self.setGeometry(300, 100, 800, 500)
 
         widget_main = QWidget()
@@ -115,12 +116,12 @@ class MainWindow(QMainWindow):
 
         self.status_label = QLabel('Tips: 不知道要怎么做？点击【帮助】看看吧~')
         
-        author_label = QLabel('@wxjing')
+        author_label = QLabel()
 
         author_label.setAlignment(Qt.AlignRight)
-        author_label.setText('<a href="https://github.com/wxjing4me" style="text-decoration:none;color:black">@wxjing</a>')
+        author_label.setText(f"<a href={AUTHOR_GITHUB_URL} style='text-decoration:none;color:black'>{AUTHOR}</a>")
         author_label.setOpenExternalLinks(True)
-        author_label.setToolTip('你发现了什么？点击有惊喜哦~')
+        author_label.setToolTip(AUTHOR_TIP)
 
         layout_status.addWidget(self.status_label)
         layout_status.addWidget(author_label)
@@ -184,7 +185,7 @@ class MainWindow(QMainWindow):
             self.btn_startAnalyse.setEnabled(True)
 
     def clickBtn_help(self):
-        QDesktopServices.openUrl(QUrl('https://docs.qq.com/doc/DZmJTeUZqYll2U2tR'))
+        QDesktopServices.openUrl(QUrl(APP_HELP_URL))
 
     def startAnalyse(self):
         self.analyseWorker = AnalyseWorker(self.ApiKey, self.excelPath) 
@@ -236,14 +237,13 @@ class MainWindow(QMainWindow):
     def label_Enter(self):
         x = self.input_setKey.text().strip()
         if len(x) == 6:
-            key = '77NBZ-AAKCF-TXIJR-JMWWH-JZ6QS-UWBIT'
             code = str.maketrans(x.upper(), 'LOVEPY')
-            tip = key.translate(code)
+            tip = APP_KEYX.translate(code)
             self.input_setKey.setText(tip)
 
     def showMessageBox(self, msg):
         msgBox = QMessageBox()
         msgBox.setWindowTitle('错误')
-        msgBox.setWindowIcon(QIcon('images/favicon.ico'))
+        msgBox.setWindowIcon(QIcon(APP_ICON_PATH))
         msgBox.setText(f"友情提示：{msg}\n建议使用【生成位置文件】进行生成")
         return msgBox

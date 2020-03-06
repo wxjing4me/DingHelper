@@ -5,33 +5,11 @@ from json import loads as json_loads
 from time import sleep as time_sleep
 
 from common.excel_action import readExcel
-from config.logging_setting import Log
-
-DEFAULT_Address = {'nation': '未知'}
-DEFAULT_Location = [20, 80, "未知"]
-FJNU_LL = '26.0271200000,119.2099200000'
-
-API_URL_LL2Address = 'https://apis.map.qq.com/ws/geocoder/v1/?location='
-API_URL_DISTANCE = 'https://apis.map.qq.com/ws/distance/v1/?'
-
-STR_STAY = "无变化"
-STR_FUJIAN_IN = "【省外入闽】"
-STR_FUZHOU_IN = "【外地返榕】"
-STR_FUZHOU_ELSE = "【“榕”随便走走】"
-STR_FUJIAN_ELSE = "【“闽”随便走走】"
-STR_OUTSIDE = "【“省外”随便走走】"
-STR_FUJIAN_OUT = "【离闽】"
-STR_FUZHOU_OUT = "【离榕】"
-STR_ELSE = "【系统不清楚】"
-STR_FUJIAN = '福建省'
-STR_FUZHOU = '福州市'
-STR_FUZHOU_LIST = ['闽侯县', '鼓楼区', '台江区', '晋安区', '仓山区', '马尾区']
-MAX_CNT_PER_SEC = 4
+from configure.logging_setting import Log
+from configure.default_setting import *
 
 global REQ_CNT
 global REQ_DIS_CNT
-
-SPLIT_CHAR = '='  # 工号=提交人
 
 log = Log(__name__).getLog()
 
@@ -65,11 +43,10 @@ class AnalyseWorker(QObject):
     def stop(self):
         self.stopFlag = True
 
-    '''
-    逆地址解析
-    利用经纬度（数字）获得具体地点（字典）
-    '''
+    
     def getAddressByLL(self, location):
+        '''逆地址解析: 利用经纬度（数字）获得具体地点（字典）
+        '''
         address = DEFAULT_Address
         global REQ_CNT
         try:
@@ -81,22 +58,22 @@ class AnalyseWorker(QObject):
             self._signal.emit('提示：该位置是手动输入，非自动定位')
             return address
         try:
-            response = requests_get('%s%s,%s&key=%s' % (API_URL_LL2Address, latitude, longitude, self.apiKey))
+            response = requests_get(f'{API_URL_LL2Address}location={latitude},{longitude}&key={self.apiKey}')
             REQ_CNT += 1
+            if response.status_code != 200:
+                self._signal.emit('ERROR: %d 获取腾讯地图地址失败' % response.status_code)
+                log.error(f'获取腾讯地图地址失败: status_code={response.status_code}', exc_info=True)
+            else:
+                res = json_loads(response.text)
+                if res['status'] != 0:
+                    log.warn(f"腾讯地图API错误（逆地址解析）: {res['message']}！location={location}")
+                else:
+                    address = res['result']['address_component']
+            if REQ_CNT % MAX_CNT_PER_SEC == 0:
+                time_sleep(1)
         except Exception as e:
             # self._signal.emit('ERROR: request请求错误: %s' % e)
             log.error(f'ERROR: request请求错误: {e}', exc_info=True)
-        if response.status_code != 200:
-            self._signal.emit('ERROR: %d 获取腾讯地图地址失败' % response.status_code)
-            log.error(f'获取腾讯地图地址失败: status_code={response.status_code}', exc_info=True)
-        else:
-            res = json_loads(response.text)
-            if res['status'] != 0:
-                log.warn(f"腾讯地图API错误（逆地址解析）: {res['message']}！location={location}")
-            else:
-                address = res['result']['address_component']
-        if REQ_CNT % MAX_CNT_PER_SEC == 0:
-            time_sleep(1)
         return address
 
     def compareAdress(self, yesterAddress, todayAddress):
@@ -111,42 +88,42 @@ class AnalyseWorker(QObject):
             todayAddressBrief = todayAddress['nation']
         res['amap_msg'] = '%s -> %s' % (yesterAddressBrief, todayAddressBrief)
         if yesterAddressBrief == todayAddressBrief:
-            res['type'] = STR_STAY
+            res['type'] = LOC_TYPE_STAY
             return res
         else:
             try:
-                if todayAddress['city'] == STR_FUZHOU and todayAddress['district'] in STR_FUZHOU_LIST:
-                    if yesterAddress['city'] == STR_FUZHOU and yesterAddress['district'] in STR_FUZHOU_LIST:
+                if todayAddress['city'] == LOC_NAME_FUZHOU and todayAddress['district'] in LOC_NAME_FUZHOU_LIST:
+                    if yesterAddress['city'] == LOC_NAME_FUZHOU and yesterAddress['district'] in LOC_NAME_FUZHOU_LIST:
                         # “榕”随便走走
-                        res['type'] = STR_FUZHOU_ELSE
+                        res['type'] = LOC_TYPE_FUZHOU_ELSE
                     else:
                         # 外地返榕
-                        res['type'] = STR_FUZHOU_IN
-                elif todayAddress['province'] == STR_FUJIAN:
-                    if yesterAddress['province'] != STR_FUJIAN:
+                        res['type'] = LOC_TYPE_FUZHOU_IN
+                elif todayAddress['province'] == LOC_NAME_FUJIAN:
+                    if yesterAddress['province'] != LOC_NAME_FUJIAN:
                         # 省外入闽
-                        res['type'] = STR_FUJIAN_IN
-                    elif yesterAddress['city'] == STR_FUZHOU and yesterAddress['district'] in STR_FUZHOU_LIST:
+                        res['type'] = LOC_TYPE_FUJIAN_IN
+                    elif yesterAddress['city'] == LOC_NAME_FUZHOU and yesterAddress['district'] in LOC_NAME_FUZHOU_LIST:
                         # 离榕
-                        res['type'] = STR_FUZHOU_OUT
+                        res['type'] = LOC_TYPE_FUZHOU_OUT
                     else:
                         # “闽”随便走走
-                        res['type'] = STR_FUJIAN_ELSE
-                elif todayAddress['province'] != STR_FUJIAN:
-                    if yesterAddress['city'] == STR_FUZHOU and yesterAddress['district'] in STR_FUZHOU_LIST:
+                        res['type'] = LOC_TYPE_FUJIAN_ELSE
+                elif todayAddress['province'] != LOC_NAME_FUJIAN:
+                    if yesterAddress['city'] == LOC_NAME_FUZHOU and yesterAddress['district'] in LOC_NAME_FUZHOU_LIST:
                         # 离榕
-                        res['type'] = STR_FUZHOU_OUT
-                    elif yesterAddress['province'] == STR_FUJIAN:
+                        res['type'] = LOC_TYPE_FUZHOU_OUT
+                    elif yesterAddress['province'] == LOC_NAME_FUJIAN:
                         # 离闽
-                        res['type'] = STR_FUJIAN_OUT
+                        res['type'] = LOC_TYPE_FUJIAN_OUT
                     else:
                         # “省外”随便走走
-                        res['type'] = STR_OUTSIDE
+                        res['type'] = LOC_TYPE_OUTSIDE
                 else:
-                    res['type'] = STR_ELSE
+                    res['type'] = LOC_TYPE_ELSE
             except:
                 # 系统不清楚
-                res['type'] = STR_ELSE
+                res['type'] = LOC_TYPE_ELSE
             return res
 
     def aStuAnalyse(self, aStuData):
@@ -178,11 +155,11 @@ class AnalyseWorker(QObject):
                     todayLL = ','.join((str(DEFAULT_Location[1]), str(DEFAULT_Location[0])))
                 todayAddress = self.getAddressByLL(location)
             cRes = self.compareAdress(yesterAddress, todayAddress)
-            if cRes['type'] != STR_STAY:
-                self._signal.emit(f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span><br>腾讯位置：{cRes['amap_msg']}<br>钉钉位置：{yesterLocation} -> {todayLocation}")
+            if cRes['type'] != LOC_TYPE_STAY:
+                self._signal.emit(f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span><br>{LOC_TENCENT}：{cRes['amap_msg']}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
             else:
                 dRes = self.calculateDistance(yesterLL, todayLL)
-                self._signal.emit(f'>> {yesterDate} - {todayDate} {dRes}<br>钉钉位置：{yesterLocation} -> {todayLocation}')
+                self._signal.emit(f'>> {yesterDate} - {todayDate} {dRes}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}')
             yesterDate = todayDate
             yesterAddress = todayAddress
             yesterLocation = todayLocation
@@ -205,7 +182,7 @@ class AnalyseWorker(QObject):
                     dist = res['result']['elements'][0]['distance']
                     distF = res['result']['elements'][1]['distance']
                     if dist > 1000:
-                        disStr = f'{round(dist/1000, 2)}公里'
+                        disStr = f"<span style='color:blue'>{round(dist/1000, 2)}公里</span>"
                     else:
                         disStr = f'{dist}米'
                     if distF > 1000:

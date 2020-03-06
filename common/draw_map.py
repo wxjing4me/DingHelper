@@ -6,13 +6,10 @@ from os.path import join as ospath_join
 
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from common.excel_action import readExcel
-from config.logging_setting import Log
+from configure.logging_setting import Log
+from configure.default_setting import *
 
 log = Log(__name__).getLog()
-
-DEFAULT_Location = [20, 80, "未知"]
-
-SPLIT_CHAR = '='  # 工号=提交人
 
 class DrawMapWorker(QObject):
 

@@ -8,6 +8,7 @@ from os.path import split as os_path_split, normpath as os_path_normpath
 from time import strftime as time_strftime, localtime as time_localtime
 
 from common.excel_action import MergeExcelWorker, testRawExcel
+from configure.default_setting import *
 
 class ExcelWindow(QWidget):
     def __init__(self):
@@ -20,17 +21,16 @@ class ExcelWindow(QWidget):
 
     def initUI(self):
 
-        font_Yahei = QFont("Microsoft YaHei")
+        font_Yahei = QFont(FONT_NAME_YAHEI)
 
         self.setWindowTitle('生成位置文件')
-        self.setWindowIcon(QIcon('images/favicon.ico'))
+        self.setWindowIcon(QIcon(APP_ICON_PATH))
         self.setGeometry(450, 200, 600, 400)
         
         layout_main = QVBoxLayout()
         self.setLayout(layout_main)
         
         self.setFont(font_Yahei)
-
 
         #-----说明模块---------------------------------------
         widget_intro = QWidget()
@@ -97,14 +97,14 @@ class ExcelWindow(QWidget):
         layout_status = QHBoxLayout()
         widget_status.setLayout(layout_status)
 
-        self.status_label = QLabel('请点击【添加文件】开始')
+        self.status_label = QLabel('请点击【添加文件】开始~')
         
-        author_label = QLabel('@wxjing')
+        author_label = QLabel()
 
         author_label.setAlignment(Qt.AlignRight)
-        author_label.setText('<a href="https://github.com/wxjing4me" style="text-decoration:none;color:black">@wxjing</a>')
+        author_label.setText(f'<a href={AUTHOR_GITHUB_URL} style="text-decoration:none;color:black">{AUTHOR}</a>')
         author_label.setOpenExternalLinks(True)
-        author_label.setToolTip('你发现了什么？点击有惊喜哦~')
+        author_label.setToolTip(AUTHOR_TIP)
 
         layout_status.addWidget(self.status_label)
         layout_status.addWidget(author_label)
@@ -210,7 +210,7 @@ class ExcelWindow(QWidget):
     def showMessageBox(self, errMsg):
         msgBox = QMessageBox()
         msgBox.setWindowTitle('错误')
-        msgBox.setWindowIcon(QIcon('images/favicon.ico'))
+        msgBox.setWindowIcon(QIcon(APP_ICON_PATH))
         msgBox.setText(f"友情提示：{len(errMsg)}个文件添加错误了！请重试！请使用钉钉【员工健康】导出的原始文件！")
         msgBox.setDetailedText('\n\n'.join(errMsg))
         return msgBox

@@ -3,10 +3,10 @@
 block_cipher = None
 
 
-a = Analysis(['app.py', 'windows\\excelWin.py', 'windows\\MainWin.py', 'common\\analyse.py', 'common\\draw_map.py', 'common\\excel_action.py', 'common\\tencent_api.py', 'config\\logging_setting.py', 'logs\\error'],
+a = Analysis(['app.py', 'windows\\excelWin.py', 'windows\\MainWin.py', 'common\\analyse.py', 'common\\draw_map.py', 'common\\excel_action.py', 'common\\tencent_api.py', 'configure\\logging_setting.py', 'logs\\error'],
              pathex=['D:\\Anaconda3\\envs\\py36x32\\Lib\\site-packages', 'I:\\Github\\DingHelper'],
              binaries=[],
-             datas=[('logs/error.log', 'logs'), ('images/favicon.ico', 'images'), ('images/excel_tip.png', 'images'), ('includex32/pyecharts', 'pyecharts'), ('includex32/pyecharts-1.7.0.dist-info', 'pyecharts-1.7.0.dist-info')],
+             datas=[('logs/error', 'logs'), ('images/favicon.ico', 'images'), ('images/excel_tip.png', 'images'), ('includex32/pyecharts', 'pyecharts'), ('includex32/pyecharts-1.7.0.dist-info', 'pyecharts-1.7.0.dist-info')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],

@@ -5,7 +5,7 @@
 /__pycache__/
 /windows/__pycache__/
 /common/__pycache__/
-/config/__pycache__/
+/configure/__pycache__/
 /excels/
 /logs/*
 helpMyself.md

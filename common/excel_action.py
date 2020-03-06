@@ -4,19 +4,14 @@ from xlsxwriter import Workbook as xlsxwriter_Workbook
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from time import sleep as time_sleep
 
-from config.logging_setting import Log
-
-# 第1行默认为表头
-START_ROW = 1 # default:1
-
-SPLIT_CHAR = '='  # 工号=提交人
+from configure.logging_setting import Log
+from configure.default_setting import *
 
 log = Log(__name__).getLog()
 
-'''
-判断Excel格式是否符合【每日健康打卡】
-'''
 def testRawExcel(excel_path):
+    '''判断是否符合【每日健康打卡】导出的Excel文件格式
+    '''
     res = {}
     res['code'] = 0
     res['msg'] = ''
@@ -24,18 +19,19 @@ def testRawExcel(excel_path):
         excel = xlrd_open_workbook(excel_path)
         sht_names = excel.sheet_names()
         for sht_name in sht_names:
-            log.debug(f'Doing...Excel:{excel_path}, Sheet:{sht_name}')
+            log.debug(f'Doing...Excel: {excel_path}, Sheet: {sht_name}')
             table = excel.sheet_by_name(sht_name)
             header = table.row_values(0)
-            needed = ['提交人', '工号', '当前时间,当前地点']
-            if len(header) != 0 and set(header) >= set(needed):
+            if len(header) != 0 and set(header) >= set(HEADER_REQUIRED):
                 res['code'] = 1
             elif len(header) == 0:
                 res['msg'] = f'请删除空表：{excel_path}<{sht_name}>后重试'
             else:
-                res['msg'] = f'{excel_path}<{sht_name}>中缺少{needed}的部分字段'
+                res['msg'] = f'{excel_path}<{sht_name}>中缺少{HEADER_REQUIRED}的部分字段'
+            if ONLY_FIRST_SHEET:
+                break
     except Exception as e:
-        res['msg'] = f'Excel表格格式有误！'
+        res['msg'] = f'Excel表格{excel_path}格式有误！'
         log.error(f'Excel表格格式有误！ - {e}', exc_info=True)
     finally:
         if res['msg'] != '':
@@ -44,6 +40,8 @@ def testRawExcel(excel_path):
         return res
 
 def testSpectExcel(excel_path):
+    '''判断是否符合位置分析的Excel文件格式
+    '''
     res = {}
     res['code'] = 0
     res['msg'] = ''
@@ -60,13 +58,15 @@ def testSpectExcel(excel_path):
             for i in range(1, nrows):
                 for j in range(2, ncols):
                     val = table.cell(i, j).value
-                    if val != '' and val != '-':
+                    if val != '' and val != STR_UNDO:
                         val = eval(val)
                         if not isinstance(val, list):
                             reFlag = False
                             break
             if reFlag:
                 res['code'] = 1
+            else:
+                res['msg'] = f'该Excel表格格式有误，请重新选择文件！'
         else:
             res['msg'] = '该Excel表格数据量不足，请重新选择文件！'
     except Exception as e:
@@ -136,15 +136,15 @@ class MergeExcelWorker(QObject):
                 for table in tables:
                     header = table.row_values(0)
                     # 钉钉打卡导出结果中必有【工号】【提交人】【当前时间,当前地点】
-                    idx_sno = header.index('工号')
-                    idx_sname = header.index('提交人')
-                    idx_location = header.index('当前时间,当前地点')
+                    idx_sno = header.index(STR_SNO)
+                    idx_sname = header.index(STR_NAME)
+                    idx_location = header.index(STR_TIME_LOC)
                     for i in range(1, len(table.col_values(0))):
                         sinfo = f'{table.cell(i, idx_sno).value}{SPLIT_CHAR}{table.cell(i, idx_sname).value}'
                         if sinfo not in stuInfos:
                             stuInfos.append(sinfo)
                         str_location = table.cell(i, idx_location).value
-                        if str_location != '-':
+                        if str_location != STR_UNDO:
                             try:
                                 sdate = eval(str_location)[0][:10]
                                 if sdate not in datas:
@@ -152,6 +152,8 @@ class MergeExcelWorker(QObject):
                                 datas[sdate][sinfo] = str_location
                             except Exception as e:
                                 log.warn(f'{e}', exc_info=True)
+                    if ONLY_FIRST_SHEET:
+                        break
             except Exception as e:
                 log.warn(f'读取{excel_path}出错: {e}', exc_info = True)
         # 补充遗漏的学生数据
@@ -159,7 +161,7 @@ class MergeExcelWorker(QObject):
             log.info(f'日期: {date}, 人员数: {len(datas[date])}')
             for stu in stuInfos:
                 if stu not in datas[date]:
-                    datas[date][stu] = '-'
+                    datas[date][stu] = STR_UNDO
         return datas, stuInfos
 
 
@@ -173,11 +175,11 @@ class MergeExcelWorker(QObject):
             # 设置格式
             table.set_column(0, 1, 15)
             table.set_column(2, len(dates)+1, 31)
-            format_header = excel.add_format({'bold': True, 'font_name': '微软雅黑', 'font_size': 10, 'text_wrap': True, 'valign': 'top'})
-            format_cell = excel.add_format({'font_name': '微软雅黑', 'font_size': 10, 'text_wrap': True, 'valign': 'top'})
+            format_header = excel.add_format({'bold': True, 'font_name': FONT_NAME_YAHEI, 'font_size': FONT_SIZE, 'text_wrap': True, 'valign': 'top'})
+            format_cell = excel.add_format({'font_name': FONT_NAME_YAHEI, 'font_size': FONT_SIZE, 'text_wrap': True, 'valign': 'top'})
             # 写入表头
-            table.write(0, 0, '工号', format_header)
-            table.write(0, 1, '提交人', format_header)
+            table.write(0, 0, STR_SNO, format_header)
+            table.write(0, 1, STR_NAME, format_header)
             for ki in range(len(datas.keys())):
                 m, d = [int(i) for i in dates[ki][-5:].split('-')]
                 dateStr = f"{m}月{d}日"
