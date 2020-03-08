@@ -2,20 +2,27 @@
 from json import loads as json_loads
 from requests import get as requests_get
 
+from configure.logging_setting import Log
 from configure.default_setting import *
 
-def testApiKey(key):
+log = Log(__name__).getLog()
+
+def testApiKey(key, mtype='AMAP'):
+    '''测试API Key是否可用
+    高德地图：status=1表示成功；status=0表示失败
+    腾讯地图：status=0表示成功；status!=0表示失败
+    '''
     key = key.strip()
     testRes = {}
     if len(key) == 0:
         testRes['code'] = 0
         testRes['msg'] = '提示：Key值不能为空'
         return testRes
-    elif len(key) != 35:
+    elif (mtype == 'AMAP' and len(key) != 32) or (mtype == 'QQ' and len(key) != 35):
         testRes['code'] = 0
         testRes['msg'] = '提示：Key格式有误！'
         return testRes
-    url = f'{API_URL_IP}key={key}'
+    url = f"{eval(mtype+'_API_URL_IP')}key={key}"
     try:
         response = requests_get(url)
     except:
@@ -30,11 +37,20 @@ def testApiKey(key):
     else:
         res = json_loads(response.text)
         # print(res)
-        if res['status'] != 0:
+        if mtype == 'QQ' and res['status'] != 0:
             testRes['code'] = 0
-            testRes['msg'] = '腾讯地图API错误：%s；请查询文档后再试' % res['message']
-            return testRes
-        else:
+            testRes['msg'] = f"API Key设置错误：{res['message']}；请查询文档后再试"
+        elif mtype == 'QQ' and res['status'] == 0:
             testRes['code'] = 1
-            testRes['msg'] = '提示：Key设置成功！'
-            return testRes
+            testRes['msg'] = '提示：腾讯地图API Key设置成功！'
+        elif mtype == 'AMAP' and int(res['status']) == 0:
+            testRes['code'] = 0
+            testRes['msg'] = f"API Key设置错误：{res['info']}；请查询文档后再试"
+        elif mtype == 'AMAP' and int(res['status']) == 1:
+            testRes['code'] = 1
+            testRes['msg'] = '提示：高德地图API Key设置成功！'
+        else:
+            testRes['code'] = 0
+            testRes['msg'] = '提示：未知错误！'
+            log.error(f"type={mtype}, res['status']={res['status']}")
+        return testRes

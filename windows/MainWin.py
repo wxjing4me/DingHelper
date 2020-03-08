@@ -1,5 +1,5 @@
 #-*-coding:utf-8-*-
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextBrowser, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QMenuBar, QMenu, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextBrowser, QFileDialog, QMessageBox, QAction
 from PyQt5.QtGui import QIcon, QFont, QDesktopServices
 from PyQt5.QtCore import QUrl, Qt, QThread, QDateTime
 
@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
        self.excelPath = ''
 
        self.initUI()
+       self.reinitUI()
 
     def initUI(self):
         
@@ -47,9 +48,8 @@ class MainWindow(QMainWindow):
 
         layout_setKey = QHBoxLayout()
 
-        label_setKey = QLabel('腾讯地图API Key：')
+        self.label_setKey = QLabel()
         self.input_setKey = QLineEdit(self)
-        self.input_setKey.setPlaceholderText('XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX')
         self.input_setKey.returnPressed.connect(self.label_Enter)
         
         self.btn_setKey = QPushButton('设置Key')
@@ -57,7 +57,7 @@ class MainWindow(QMainWindow):
         
         widget_setKey.setLayout(layout_setKey)
 
-        layout_setKey.addWidget(label_setKey)
+        layout_setKey.addWidget(self.label_setKey)
         layout_setKey.addWidget(self.input_setKey)
         layout_setKey.addWidget(self.btn_setKey)
 
@@ -70,6 +70,9 @@ class MainWindow(QMainWindow):
         widget_buttons = QWidget()
         layout_buttons = QVBoxLayout()
         widget_buttons.setLayout(layout_buttons)
+
+        self.btn_setting = QPushButton('设置')
+        layout_buttons.addWidget(self.btn_setting)
 
         self.btn_mergeExcel = QPushButton('生成位置文件')
         layout_buttons.addWidget(self.btn_mergeExcel)
@@ -94,13 +97,13 @@ class MainWindow(QMainWindow):
         self.btn_drawMap.setEnabled(False)
         layout_buttons.addWidget(self.btn_drawMap)
 
+        btn_clear = QPushButton('清空结果')
+        btn_clear.clicked.connect(self.clickBtn_clear)
+        layout_buttons.addWidget(btn_clear)
+
         self.btn_output = QPushButton('导出结果')
         self.btn_output.clicked.connect(self.clickBtn_output)
         layout_buttons.addWidget(self.btn_output)
-
-        btn_help = QPushButton('帮助')
-        btn_help.clicked.connect(self.clickBtn_help)
-        layout_buttons.addWidget(btn_help)
 
         layout_opt.addWidget(widget_buttons)
 
@@ -114,19 +117,23 @@ class MainWindow(QMainWindow):
         layout_status = QHBoxLayout()
         widget_status.setLayout(layout_status)
 
-        self.status_label = QLabel('Tips: 不知道要怎么做？点击【帮助】看看吧~')
+        status_label = QLabel(f"Tips: 不知道要怎么做？看看<a href={APP_HELP_URL} style={A_URL_STYLE}>【帮助文档】</a>吧~")
+        status_label.setOpenExternalLinks(True)
         
         author_label = QLabel()
-
         author_label.setAlignment(Qt.AlignRight)
-        author_label.setText(f"<a href={AUTHOR_GITHUB_URL} style='text-decoration:none;color:black'>{AUTHOR}</a>")
+        author_label.setText(f"<a href={APP_GITHUB_URL} style={A_URL_STYLE}>{APP_NAME}</a> {VERSION} <a href={AUTHOR_GITHUB_URL} style={A_URL_STYLE}>{AUTHOR}</a>")
         author_label.setOpenExternalLinks(True)
         author_label.setToolTip(AUTHOR_TIP)
 
-        layout_status.addWidget(self.status_label)
+        layout_status.addWidget(status_label)
         layout_status.addWidget(author_label)
 
         layout_main.addWidget(widget_status)
+
+    def reinitUI(self):
+        self.label_setKey.setText(f"{MAP_NAME}地图API Key：")
+        self.input_setKey.setPlaceholderText(eval(MAP_TYPE+'_API_FORMAT'))
 
     def clickBtn_setKey(self):
         self.ApiKey = self.input_setKey.text()
@@ -143,11 +150,10 @@ class MainWindow(QMainWindow):
 
     def clickbtn_selectExcel(self):
         self.excelPath, _ = QFileDialog.getOpenFileName(self, "选择Excel文件", os_getcwd(), "Excel files(*.xlsx , *.xls)")
-        # print('选择文件路径：%s' % self.excelPath)
         if len(self.excelPath.strip()) != 0:
             testRes = testSpectExcel(self.excelPath)
             if testRes['code'] == 1:
-                self.updateOutput('选择文件路径：%s\n提示：点击【分析位移】或【生成地图】' % self.excelPath)
+                self.updateOutput(f"<span style='background-color:gray;color:white;'>选择文件路径：{self.excelPath}</span><br>提示：点击【分析位移】或【生成地图】")
                 self.btn_startAnalyse.setEnabled(True)
                 self.btn_drawMap.setEnabled(True)
             else:
@@ -184,8 +190,8 @@ class MainWindow(QMainWindow):
             self.drawMap()
             self.btn_startAnalyse.setEnabled(True)
 
-    def clickBtn_help(self):
-        QDesktopServices.openUrl(QUrl(APP_HELP_URL))
+    def clickBtn_clear(self):
+        self.output.clear()
 
     def startAnalyse(self):
         self.analyseWorker = AnalyseWorker(self.ApiKey, self.excelPath) 
@@ -237,8 +243,11 @@ class MainWindow(QMainWindow):
     def label_Enter(self):
         x = self.input_setKey.text().strip()
         if len(x) == 6:
-            code = str.maketrans(x.upper(), 'LOVEPY')
-            tip = APP_KEYX.translate(code)
+            if MAP_TYPE == 'AMAP':
+                code = str.maketrans(x, 'abcdef')
+            elif MAP_TYPE == 'QQ':
+                code = str.maketrans(x.upper(), 'LOVEPY')
+            tip = eval(MAP_TYPE+'_KEYX').translate(code)
             self.input_setKey.setText(tip)
 
     def showMessageBox(self, msg):

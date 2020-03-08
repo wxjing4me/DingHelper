@@ -3,21 +3,40 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+APP_NAME = 'DingHelper'
+VERSION = 'v1.1.0'
 AUTHOR = '@wxjing'
 AUTHOR_GITHUB_URL = 'https://github.com/wxjing4me'
+APP_GITHUB_URL = 'https://github.com/wxjing4me/DingHelper'
 AUTHOR_TIP = '你发现了什么？点击有惊喜哦~'
 APP_HELP_URL = 'https://docs.qq.com/doc/DZmJTeUZqYll2U2tR'
 APP_ICON_PATH = 'images/favicon.ico'
-APP_KEYX = '77NBZ-AAKCF-TXIJR-JMWWH-JZ6QS-UWBIT'
+A_URL_STYLE = 'text-decoration:none;color:black;'
 
 DEFAULT_Address = {'nation': '未知'}
 DEFAULT_Location = [20, 80, "未知"]
 
-FJNU_LL = '26.0271200000,119.2099200000'
+MAP_TYPE = 'AMAP' #options: QQ, AMAP
+MAP_NAME = '高德'
+if MAP_TYPE == 'QQ':
+    MAP_NAME = '腾讯'
 
-API_URL_LL2Address = 'https://apis.map.qq.com/ws/geocoder/v1/?'
-API_URL_DISTANCE = 'https://apis.map.qq.com/ws/distance/v1/?'
-API_URL_IP = 'https://apis.map.qq.com/ws/location/v1/ip?'
+FJNU_Lat = '119.209920'
+FJNU_Lng = '26.027120'
+
+QQ_KEYX = '77NBZ-AAKCF-TXIJR-JMWWH-JZ6QS-UWBIT'
+QQ_API_URL_LL2Address = 'https://apis.map.qq.com/ws/geocoder/v1/?'
+QQ_API_URL_DISTANCE = 'https://apis.map.qq.com/ws/distance/v1/?'
+QQ_API_URL_IP = 'https://apis.map.qq.com/ws/location/v1/ip?'
+QQ_API_FORMAT = 'XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX'
+
+AMAP_KEYX = 'x5i7xq2wt348qtax81iw54iqt78616x2'
+AMAP_API_URL_IP = 'https://restapi.amap.com/v3/ip?'
+AMAP_API_URL_LL2Address = 'https://restapi.amap.com/v3/geocode/regeo?'
+AMAP_API_URL_Address2LL = 'https://restapi.amap.com/v3/geocode/geo?'
+AMAP_API_URL_DISTANCE = 'https://restapi.amap.com/v3/distance?'
+AMAP_API_FORMAT = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+
 
 LOC_TYPE_STAY = "无变化"
 LOC_TYPE_FUJIAN_IN = "【省外入闽】"
@@ -33,7 +52,8 @@ LOC_NAME_FUJIAN = '福建省'
 LOC_NAME_FUZHOU = '福州市'
 LOC_NAME_FUZHOU_LIST = ['闽侯县' '鼓楼区', '台江区', '晋安区', '仓山区', '马尾区']
 
-MAX_CNT_PER_SEC = 4
+QQ_MAX_CNT_PER_SEC = 4
+AMAP_MAX_CNT_PER_SEC = 49
 
 SPLIT_CHAR = '='  # 工号=提交人
 
@@ -56,5 +76,8 @@ STR_UNDO = '-'
 
 HEADER_REQUIRED = [STR_SNO, STR_NAME, STR_TIME_LOC]
 
-LOC_TENCENT = '腾讯位置'
+SHOW_DISTANCE = True
+
+LOC_QQ = '腾讯位置'
+LOC_AMAP = '高德位置'
 LOC_DING = '钉钉位置'

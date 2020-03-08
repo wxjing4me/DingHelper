@@ -15,7 +15,7 @@ class Log():
         self.logger.setLevel(level=logging.DEBUG)
         formatter = logging.Formatter(fmt='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s : %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         # output to log file
-        filename = os.path.join(ROOT_DIR, 'logs', 'error')
+        filename = os_path_join(ROOT_DIR, 'logs', 'error')
         handler = handlers.TimedRotatingFileHandler(filename=filename, encoding='utf-8', when="midnight", interval=1, backupCount=3)
         handler.suffix = "%Y-%m-%d.log"
         handler.extMatch = re_compile(r"^\d{4}-\d{2}-\d{2}.log$")

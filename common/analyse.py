@@ -14,10 +14,11 @@ global REQ_DIS_CNT
 log = Log(__name__).getLog()
 
 class AnalyseWorker(QObject):
-    def __init__(self, apiKey='', excelPath=''):
+    def __init__(self, apiKey='', excelPath='', mtype='AMAP'):
         super().__init__()
         self.apiKey = apiKey
         self.excelPath = excelPath
+        self.mtype = mtype
         self.stopFlag = False
 
     _finished = pyqtSignal()
@@ -58,18 +59,25 @@ class AnalyseWorker(QObject):
             self._signal.emit('提示：该位置是手动输入，非自动定位')
             return address
         try:
-            response = requests_get(f'{API_URL_LL2Address}location={latitude},{longitude}&key={self.apiKey}')
+            if self.mtype == 'AMAP':
+                response = requests_get(f'{AMAP_API_URL_LL2Address}location={longitude},{latitude}&key={self.apiKey}')
+            elif self.mtype == 'QQ':
+                response = requests_get(f'{QQ_API_URL_LL2Address}location={latitude},{longitude}&key={self.apiKey}')
             REQ_CNT += 1
             if response.status_code != 200:
-                self._signal.emit('ERROR: %d 获取腾讯地图地址失败' % response.status_code)
-                log.error(f'获取腾讯地图地址失败: status_code={response.status_code}', exc_info=True)
+                self._signal.emit('ERROR: %d 获取地址失败' % response.status_code)
+                log.error(f'获取地址失败: mtype={self.mtype}, status_code={response.status_code}', exc_info=True)
             else:
                 res = json_loads(response.text)
-                if res['status'] != 0:
+                if self.mtype=='AMAP' and int(res['status']) == 0:
+                    log.warn(f"高德地图API错误（逆地理编码）: {res['info']}！location={location}")
+                elif self.mtype == 'AMAP' and int(res['status']) == 1:
+                    address = res['regeocode']['addressComponent']
+                elif self.mtype=='QQ' and res['status'] != 0:
                     log.warn(f"腾讯地图API错误（逆地址解析）: {res['message']}！location={location}")
-                else:
+                elif self.mtype=='QQ' and res['status'] == 0:
                     address = res['result']['address_component']
-            if REQ_CNT % MAX_CNT_PER_SEC == 0:
+            if REQ_CNT % eval(self.mtype+'_MAX_CNT_PER_SEC') == 0:
                 time_sleep(1)
         except Exception as e:
             # self._signal.emit('ERROR: request请求错误: %s' % e)
@@ -133,65 +141,74 @@ class AnalyseWorker(QObject):
 
         self._signal.emit(f'{sno} {sname}')
 
-        yesterDate, yesterAddress, yesterLL = '', '', ''
+        yesterDate, yesterAddress, yesterLat, yestlng = '', '', '', ''
         for date, location in sdata.items():
             if yesterDate == '' and yesterAddress == '':
                 yesterDate = date
                 try:
-                    yesterLocation = location[2]
-                    yesterLL = ','.join((str(location[1]), str(location[0])))
+                    yesterLat, yesterLng, yesterLocation = location[:3]
                 except:
-                    yesterLocation = DEFAULT_Location[2]
-                    yesterLL = ','.join((str(DEFAULT_Location[1]), str(DEFAULT_Location[0])))
+                    yesterLat, yesterLng, yesterLocation = DEFAULT_Location[:3]
                 yesterAddress = self.getAddressByLL(location)
                 continue
             else:
                 todayDate = date
                 try:
-                    todayLocation = location[2]
-                    todayLL = ','.join((str(location[1]), str(location[0])))
+                    todayLat, todayLng, todayLocation = location[:3]
                 except:
-                    todayLocation = DEFAULT_Location[2]
-                    todayLL = ','.join((str(DEFAULT_Location[1]), str(DEFAULT_Location[0])))
+                    todayLat, todayLng, todayLocation = DEFAULT_Location[:3]
                 todayAddress = self.getAddressByLL(location)
             cRes = self.compareAdress(yesterAddress, todayAddress)
             if cRes['type'] != LOC_TYPE_STAY:
-                self._signal.emit(f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span><br>{LOC_TENCENT}：{cRes['amap_msg']}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
+                self._signal.emit(f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span><br>{eval('LOC_'+self.mtype)}：{cRes['amap_msg']}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
             else:
-                dRes = self.calculateDistance(yesterLL, todayLL)
-                self._signal.emit(f'>> {yesterDate} - {todayDate} {dRes}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}')
+                if SHOW_DISTANCE:
+                    dRes = self.calculateDistance(yesterLat, yesterLng, todayLat, todayLng)
+                    self._signal.emit(f'>> {yesterDate} - {todayDate} {dRes}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}')
             yesterDate = todayDate
             yesterAddress = todayAddress
             yesterLocation = todayLocation
-            yesterLL = todayLL
+            yesterLat, yesterLng = todayLat, todayLng
 
-    def calculateDistance(self, fromLL, toLL):
+    def calculateDistance(self, fromLat, fromLng, toLat, toLng):
         global REQ_DIS_CNT
         disRes, disStr = '相距', '未知'
         disResF, disStrF = '距离福师大', '未知'
         try:
-            response = requests_get(f'{API_URL_DISTANCE}from={fromLL}&to={toLL};{FJNU_LL}&key={self.apiKey}')
+            if self.mtype == 'QQ':
+                response = requests_get(f'{QQ_API_URL_DISTANCE}from={fromLng},{fromLat}&to={toLng},{toLat};{FJNU_Lng},{FJNU_Lat}&key={self.apiKey}')
+            elif self.mtype == 'AMAP':
+                response = requests_get(f'{AMAP_API_URL_DISTANCE}origins={fromLat},{fromLng}|{FJNU_Lat},{FJNU_Lng}&destination={toLat},{toLng}&type=0&key={self.apiKey}')
             REQ_DIS_CNT += 1
             if response.status_code != 200:
-                log.error(f'获取腾讯地图地址失败: status_code={response.status_code}', exc_info=True)
+                log.error(f'获取地址失败: status_code={response.status_code}', exc_info=True)
             else:
+                dist, distF = -1, -1
                 res = json_loads(response.text)
-                if res['status'] != 0:
-                    log.error(f"腾讯地图API错误（距离计算）: {res['message']}！from={fromLL}&to={toLL};{FJNU_LL}")
-                else:
+                if self.mtype=='QQ' and res['status'] != 0:
+                    log.error(f"腾讯地图API错误（距离计算）: {res['message']}！from={fromLng},{fromLat}&to={toLng},{toLat};{FJNU_Lng},{FJNU_Lat}")
+                elif self.mtype=='QQ' and res['status'] == 0:
                     dist = res['result']['elements'][0]['distance']
                     distF = res['result']['elements'][1]['distance']
-                    if dist > 1000:
-                        disStr = f"<span style='color:blue'>{round(dist/1000, 2)}公里</span>"
-                    else:
-                        disStr = f'{dist}米'
-                    if distF > 1000:
-                        disStrF = f'{round(distF/1000, 2)}公里'
-                    else:
-                        disStrF = f'{distF}米'
-                    if distF < 10000:
-                        disStrF = f"<span style='color:blue'>{disStrF}</span>"
-            if REQ_DIS_CNT % MAX_CNT_PER_SEC == 0:
+                elif self.mtype == 'AMAP' and int(res['status']) == 0:
+                    log.error(f"高德地图API错误（距离计算）: {res['info']}！origins={fromLat},{fromLng}|{FJNU_Lat},{FJNU_Lng}&destination={toLat},{toLng}")
+                elif self.mtype == 'AMAP' and int(res['status']) == 1:
+                    # log.debug(res['results'])
+                    dist = int(res['results'][0]['distance'])
+                    distF = int(res['results'][1]['distance'])
+                # 两日距离
+                if dist > 1000:
+                    disStr = f"<span style='color:blue'>{round(dist/1000, 2)}公里</span>"
+                elif dist >= 0:
+                    disStr = f'{dist}米'
+                # 距离福师大
+                if distF > 1000:
+                    disStrF = f'{round(distF/1000, 2)}公里'
+                elif 0 < distF < 1000:
+                    disStrF = f'{distF}米'
+                if 0 < distF < 10000:
+                    disStrF = f"<span style='color:blue'>{disStrF}</span>"
+            if REQ_DIS_CNT % eval(self.mtype+'_MAX_CNT_PER_SEC') == 0:
                 time_sleep(1)
         except Exception as e:
             log.error(f'计算距离出错：{e}', exc_info=True)
