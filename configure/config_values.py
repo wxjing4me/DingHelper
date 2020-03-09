@@ -2,6 +2,8 @@
 import os
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+USER_SETTINGS_JSON = os.path.join(ROOT_DIR, 'settings', 'settings_user.json')
+DEFAULT_SETTINGS_JSON = os.path.join(ROOT_DIR, 'settings', 'settings_default.json')
 
 APP_NAME = 'DingHelper'
 VERSION = 'v1.1.0'
@@ -16,10 +18,7 @@ A_URL_STYLE = 'text-decoration:none;color:black;'
 DEFAULT_Address = {'nation': '未知'}
 DEFAULT_Location = [20, 80, "未知"]
 
-MAP_TYPE = 'AMAP' #options: QQ, AMAP
-MAP_NAME = '高德'
-if MAP_TYPE == 'QQ':
-    MAP_NAME = '腾讯'
+MAP_NAMES = {'AMAP': '高德', 'QQ': '腾讯'}
 
 FJNU_Lat = '119.209920'
 FJNU_Lng = '26.027120'
@@ -60,11 +59,8 @@ SPLIT_CHAR = '='  # 工号=提交人
 #----------------------------------------------------------
 # 关于Excel
 #----------------------------------------------------------
-# 第1行默认为表头
-START_ROW = 1 # default:1
 
-# 仅处理Excel中的第一个工作表
-ONLY_FIRST_SHEET = True # 默认为False
+
 FONT_NAME_YAHEI = '微软雅黑'
 FONT_SIZE = 10
 
@@ -76,7 +72,6 @@ STR_UNDO = '-'
 
 HEADER_REQUIRED = [STR_SNO, STR_NAME, STR_TIME_LOC]
 
-SHOW_DISTANCE = True
 
 LOC_QQ = '腾讯位置'
 LOC_AMAP = '高德位置'

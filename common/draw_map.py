@@ -6,8 +6,8 @@ from os.path import join as ospath_join
 
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from common.excel_action import readExcel
-from configure.logging_setting import Log
-from configure.default_setting import *
+from configure.logging_action import Log
+from configure.config_values import *
 
 log = Log(__name__).getLog()
 

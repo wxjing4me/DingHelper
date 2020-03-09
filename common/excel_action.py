@@ -4,8 +4,9 @@ from xlsxwriter import Workbook as xlsxwriter_Workbook
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from time import sleep as time_sleep
 
-from configure.logging_setting import Log
-from configure.default_setting import *
+from configure.logging_action import Log
+from configure.config_values import *
+from configure import config_action as confAct
 
 log = Log(__name__).getLog()
 
@@ -28,7 +29,7 @@ def testRawExcel(excel_path):
                 res['msg'] = f'请删除空表：{excel_path}<{sht_name}>后重试'
             else:
                 res['msg'] = f'{excel_path}<{sht_name}>中缺少{HEADER_REQUIRED}的部分字段'
-            if ONLY_FIRST_SHEET:
+            if confAct.ONLY_FIRST_SHEET:
                 break
     except Exception as e:
         res['msg'] = f'Excel表格{excel_path}格式有误！'
@@ -87,7 +88,7 @@ def readExcel(excel_path):
     nrow = table.nrows
     header = table.row_values(0)
     # print(header)
-    for i in range(START_ROW, nrow):
+    for i in range(confAct.START_ROW, nrow):
         stu = {}
         stu['info'] = SPLIT_CHAR.join((table.cell(i,0).value, table.cell(i, 1).value))
         stuData = {}
@@ -152,7 +153,7 @@ class MergeExcelWorker(QObject):
                                 datas[sdate][sinfo] = str_location
                             except Exception as e:
                                 log.warn(f'{e}', exc_info=True)
-                    if ONLY_FIRST_SHEET:
+                    if confAct.ONLY_FIRST_SHEET:
                         break
             except Exception as e:
                 log.warn(f'读取{excel_path}出错: {e}', exc_info = True)

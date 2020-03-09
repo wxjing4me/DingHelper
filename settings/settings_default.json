@@ -1,0 +1,8 @@
+{
+    "MAP_TYPE": "AMAP",
+    "SHOW_DISTANCE": "show",
+    "FUNC_TYPE": "clockIn",
+    "HANDLE_SHEET": "first",
+    "START_ROW": 1,
+    "DATA_DIR": "I:/Github/DingHelper/excels"
+}

@@ -3,12 +3,16 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLa
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt, QThread
 
-from os import getcwd as os_getcwd, system as os_system
+from os import system as os_system
 from os.path import split as os_path_split, normpath as os_path_normpath
 from time import strftime as time_strftime, localtime as time_localtime
 
 from common.excel_action import MergeExcelWorker, testRawExcel
-from configure.default_setting import *
+from configure.config_values import *
+from configure import config_action as confAct
+from configure.logging_action import Log
+
+log = Log(__name__).getLog()
 
 class ExcelWindow(QWidget):
     def __init__(self):
@@ -16,6 +20,7 @@ class ExcelWindow(QWidget):
 
        self.excelPathList = []
        self.excelOutputPath = ''
+       self.excelDir = ''
 
        self.initUI()
 
@@ -111,6 +116,9 @@ class ExcelWindow(QWidget):
 
         layout_main.addWidget(widget_status)
     
+    def openWin(self):
+        self.__init__()
+        self.show()
 
     def testBtn_mergeExcel(self):
         if len(self.excelPathList) >= 2:

@@ -2,21 +2,44 @@
 
 block_cipher = None
 
+a = Analysis([
+            'app.py', 
+            'windows\\MainWin.py', 
+            'windows\\excelWin.py', 
+            'windows\\SettingWin.py', 
+            'common\\analyse.py', 
+            'common\\draw_map.py', 
+            'common\\excel_action.py', 
+            'common\\test_api_key.py', 
+            'configure\\config_action.py', 
+            'configure\\config_values.py', 
+            'configure\\logging_action.py'
+            ],
+            pathex=[
+                'D:\\Anaconda3\\envs\\py36\\Lib\\site-packages', 
+                'I:\\Github\\DingHelper'
+                ],
+            binaries=[],
+            datas=[
+                ('images/favicon.ico', 'images'), 
+                ('images/excel_tip.png', 'images'), 
+                ('settings/settings_default.json', 'settings'), 
+                ('logs/error.log', 'logs'), 
+                ('D:/Anaconda3/envs/py36/Lib/site-packages/pyecharts', 'pyecharts'), 
+                ('D:/Anaconda3/envs/py36/Lib/site-packages/pyecharts-1.6.2.dist-info', 'pyecharts-1.6.2.dist-info')
+                ],
+            hiddenimports=[],
+            hookspath=[],
+            runtime_hooks=[],
+            excludes=[],
+            win_no_prefer_redirects=False,
+            win_private_assemblies=False,
+            cipher=block_cipher,
+            noarchive=False)
 
-a = Analysis(['app.py', 'windows\\excelWin.py', 'windows\\MainWin.py', 'common\\analyse.py', 'common\\draw_map.py', 'common\\excel_action.py', 'common\\tencent_api.py', 'configure\\logging_setting.py', 'logs\\error'],
-             pathex=['D:\\Anaconda3\\envs\\py36\\Lib\\site-packages', 'I:\\Github\\DingHelper'],
-             binaries=[],
-             datas=[('logs/error', 'logs'), ('images/favicon.ico', 'images'), ('images/excel_tip.png', 'images'), ('D:/Anaconda3/envs/py36/Lib/site-packages/pyecharts', 'pyecharts'), ('D:/Anaconda3/envs/py36/Lib/site-packages/pyecharts-1.6.2.dist-info', 'pyecharts-1.6.2.dist-info')],
-             hiddenimports=[],
-             hookspath=[],
-             runtime_hooks=[],
-             excludes=[],
-             win_no_prefer_redirects=False,
-             win_private_assemblies=False,
-             cipher=block_cipher,
-             noarchive=False)
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
+
 exe = EXE(pyz,
           a.scripts,
           [],
@@ -27,6 +50,7 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           console=False , icon='images\\favicon.ico')
+
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,

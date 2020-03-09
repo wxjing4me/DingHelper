@@ -7,13 +7,14 @@ from os import getcwd as os_getcwd, system as os_system
 from os.path import split as ospath_split, normpath as ospath_normpath
 from time import strftime as time_strftime, localtime as time_localtime
 
-from common.tencent_api import testApiKey
+from common.test_api_key import testApiKey
 from common.excel_action import testSpectExcel
 from common.analyse import AnalyseWorker
 from common.draw_map import DrawMapWorker
 
-from configure.logging_setting import Log
-from configure.default_setting import *
+from configure.logging_action import Log
+from configure.config_values import *
+from configure import config_action as confAct
 
 log = Log(__name__).getLog()
 
@@ -27,11 +28,11 @@ class MainWindow(QMainWindow):
        self.excelPath = ''
 
        self.initUI()
-       self.reinitUI()
+       self.refreshUI()
 
     def initUI(self):
         
-        font_Yahei = QFont("Microsoft YaHei")
+        font_Yahei = QFont(FONT_NAME_YAHEI)
 
         self.setWindowTitle('钉钉数据分析小程序')
         self.setWindowIcon(QIcon(APP_ICON_PATH))
@@ -131,13 +132,17 @@ class MainWindow(QMainWindow):
 
         layout_main.addWidget(widget_status)
 
-    def reinitUI(self):
-        self.label_setKey.setText(f"{MAP_NAME}地图API Key：")
-        self.input_setKey.setPlaceholderText(eval(MAP_TYPE+'_API_FORMAT'))
+    def refreshUI(self):
+        confAct.updateSettings()
+        self.label_setKey.setText(f"{MAP_NAMES[confAct.MAP_TYPE]}地图API Key：")
+        self.input_setKey.setText('')
+        self.input_setKey.setEnabled(True)
+        self.input_setKey.setPlaceholderText(eval(confAct.MAP_TYPE+'_API_FORMAT'))
+        self.btn_setKey.setEnabled(True)
 
     def clickBtn_setKey(self):
         self.ApiKey = self.input_setKey.text()
-        res = testApiKey(self.ApiKey)
+        res = testApiKey(self.ApiKey, confAct.MAP_TYPE)
         if res['code'] == 1:
             self.ApiKeyOK = True
             self.updateOutput(res['msg'])
@@ -149,7 +154,7 @@ class MainWindow(QMainWindow):
             self.updateOutput(res['msg'])
 
     def clickbtn_selectExcel(self):
-        self.excelPath, _ = QFileDialog.getOpenFileName(self, "选择Excel文件", os_getcwd(), "Excel files(*.xlsx , *.xls)")
+        self.excelPath, _ = QFileDialog.getOpenFileName(self, "选择Excel文件", confAct.DATA_DIR, "Excel files(*.xlsx , *.xls)")
         if len(self.excelPath.strip()) != 0:
             testRes = testSpectExcel(self.excelPath)
             if testRes['code'] == 1:
@@ -170,7 +175,7 @@ class MainWindow(QMainWindow):
             self.btn_drawMap.setEnabled(False)
             self.startAnalyse()
         else:
-            self.updateOutput('提示：请先设置腾讯地图API开发者密钥（Key）~')
+            self.updateOutput(f"提示：请先设置{MAP_NAMES[confAct.MAP_TYPE]}地图API开发者密钥（Key）~")
 
     def clickbtn_stopAnalyse(self):
         self.analyseWorker.stop()
@@ -184,7 +189,7 @@ class MainWindow(QMainWindow):
                 f.write(self.output.toHtml())
 
     def clickBtn_drawMap(self):
-        self.MapsDir = QFileDialog.getExistingDirectory(self, '选择保存地图的文件夹路径', './')
+        self.MapsDir = QFileDialog.getExistingDirectory(self, '选择保存地图的文件夹路径', confAct.DATA_DIR)
         if self.MapsDir != '':
             self.btn_startAnalyse.setEnabled(False)
             self.drawMap()
@@ -243,11 +248,11 @@ class MainWindow(QMainWindow):
     def label_Enter(self):
         x = self.input_setKey.text().strip()
         if len(x) == 6:
-            if MAP_TYPE == 'AMAP':
+            if confAct.MAP_TYPE == 'AMAP':
                 code = str.maketrans(x, 'abcdef')
-            elif MAP_TYPE == 'QQ':
+            elif confAct.MAP_TYPE == 'QQ':
                 code = str.maketrans(x.upper(), 'LOVEPY')
-            tip = eval(MAP_TYPE+'_KEYX').translate(code)
+            tip = eval(confAct.MAP_TYPE+'_KEYX').translate(code)
             self.input_setKey.setText(tip)
 
     def showMessageBox(self, msg):

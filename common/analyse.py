@@ -5,8 +5,9 @@ from json import loads as json_loads
 from time import sleep as time_sleep
 
 from common.excel_action import readExcel
-from configure.logging_setting import Log
-from configure.default_setting import *
+from configure.logging_action import Log
+from configure.config_values import *
+from configure import config_action as confAct
 
 global REQ_CNT
 global REQ_DIS_CNT
@@ -162,7 +163,7 @@ class AnalyseWorker(QObject):
             if cRes['type'] != LOC_TYPE_STAY:
                 self._signal.emit(f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span><br>{eval('LOC_'+self.mtype)}：{cRes['amap_msg']}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
             else:
-                if SHOW_DISTANCE:
+                if confAct.SHOW_DISTANCE:
                     dRes = self.calculateDistance(yesterLat, yesterLng, todayLat, todayLng)
                     self._signal.emit(f'>> {yesterDate} - {todayDate} {dRes}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}')
             yesterDate = todayDate

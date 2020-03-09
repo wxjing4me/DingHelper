@@ -2,12 +2,12 @@
 from json import loads as json_loads
 from requests import get as requests_get
 
-from configure.logging_setting import Log
-from configure.default_setting import *
+from configure.logging_action import Log
+from configure.config_values import *
 
 log = Log(__name__).getLog()
 
-def testApiKey(key, mtype='AMAP'):
+def testApiKey(key, mtype):
     '''测试API Key是否可用
     高德地图：status=1表示成功；status=0表示失败
     腾讯地图：status=0表示成功；status!=0表示失败
