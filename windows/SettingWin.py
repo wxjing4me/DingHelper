@@ -31,6 +31,7 @@ class SettingWindow(QWidget):
         self.setWindowTitle('设置')
         self.setWindowIcon(QIcon(APP_ICON_PATH))
         self.setGeometry(450, 200, 290, 400)
+        #TODO:窗口大小不可变
         
         layout_main = QVBoxLayout()
         self.setLayout(layout_main)

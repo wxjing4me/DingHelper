@@ -127,7 +127,7 @@ class ExcelWindow(QWidget):
             return False
 
     def clickBtn_addExcel(self):
-        temp_excelPathList, _ = QFileDialog.getOpenFileNames(self, "选择【每日健康打卡】导出数据文件", os_getcwd(), "Excel files(*.xlsx , *.xls)")
+        temp_excelPathList, _ = QFileDialog.getOpenFileNames(self, "选择【每日健康打卡】导出数据文件", confAct.DATA_DIR, "Excel files(*.xlsx , *.xls)")
         errMsg = []
         for excelPath in temp_excelPathList:
             if excelPath not in self.excelPathList:
