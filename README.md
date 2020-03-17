@@ -53,9 +53,9 @@
 ### Dependencies
 
 - Python 3.6
-- pyecharts
-- PyQt5 5.14
-- requests
+- pyecharts (simplejson, prettytable, jinja2)
+- PyQt5 5.14 (PyQt5-sip)
+- requests (idna, certifi, urllib3, chardet)
 - xlrd / xlsxwriter
 
 ### Installation

@@ -1,12 +1,10 @@
+/.vscode/
 /dist/
 /build/
-/include/
-/includex32/
 /__pycache__/
 /windows/__pycache__/
 /common/__pycache__/
 /configure/__pycache__/
+/settings/settings_user.json
 /excels/
 /logs/*
-helpMyself.md
-requirements.txt
