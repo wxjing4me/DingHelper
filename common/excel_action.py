@@ -3,6 +3,7 @@ from xlrd import open_workbook as xlrd_open_workbook
 from xlsxwriter import Workbook as xlsxwriter_Workbook
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from time import sleep as time_sleep
+from os.path import join as os_path_join
 
 from configure.logging_action import Log
 from configure.config_values import *
@@ -23,10 +24,10 @@ def testRawExcel(excel_path):
             log.debug(f'Doing...Excel: {excel_path}, Sheet: {sht_name}')
             table = excel.sheet_by_name(sht_name)
             header = table.row_values(0)
-            if len(header) != 0 and set(header) >= set(HEADER_REQUIRED):
-                res['code'] = 1
-            elif len(header) == 0:
+            if len(header) == 0:
                 res['msg'] = f'请删除空表：{excel_path}<{sht_name}>后重试'
+            elif set(header) >= set(HEADER_REQUIRED):
+                res['code'] = 1
             else:
                 res['msg'] = f'{excel_path}<{sht_name}>中缺少{HEADER_REQUIRED}的部分字段'
             if confAct.ONLY_FIRST_SHEET:
@@ -200,8 +201,109 @@ class MergeExcelWorker(QObject):
             excel.close()
             self._finished.emit()
 
+'''
+将多个Excel根据学号姓名整合为一人一档
+'''
+class CreateProfilesWorker(QObject):
 
-if __name__ == '__main__':
-    excel_list = ['../excels/每日健康打卡(28).xlsx', '../excels/每日健康打卡(27).xlsx', '../excels/每日健康打卡(29).xlsx']
-    output_excel = '../excels/每日健康打卡位置汇总.xlsx'
-    handleExcel(excel_list, output_excel)
+    _finished = pyqtSignal()
+    _signal = pyqtSignal(str)
+
+    def __init__(self, excelsList=[], profilesDir=''):
+        super().__init__()
+        self.excelsList = excelsList
+        self.profilesDir = profilesDir
+
+    @pyqtSlot()
+    def work(self):
+        datas, stuInfos = self.handleExcels(self.excelsList)
+        self.generateProfiles(datas, stuInfos, self.profilesDir)
+
+    def handleExcels(self, excel_list):
+        datas = {}
+        stuInfos = []
+        stuDates = []
+        count = 0
+        total = len(excel_list)
+        for excel_path in excel_list:
+            count += 1
+            try:
+                excel = xlrd_open_workbook(excel_path)
+                self._signal.emit(f'正在处理 {count}/{total}：{excel_path}')
+                tables = excel.sheets()
+                for table in tables:
+                    header = table.row_values(0)
+                    # 钉钉打卡导出结果中必有【工号】【提交人】【当前时间,当前地点】
+                    idx_sno = header.index(STR_SNO)
+                    idx_sname = header.index(STR_NAME)
+                    idx_date = header.index(STR_DATE)
+                    header_profile_idxs = []
+                    for colName in HEADER_PROFILE[2:]:
+                        if colName in header:
+                            header_profile_idxs.append(header.index(colName))
+                        else:
+                            header_profile_idxs.append(-1)
+                            log.error(f'EXCEL: {excel_path} - 缺少字段: {colName}')
+                    for i in range(1, len(table.col_values(0))):
+                        sinfo = f'{table.cell(i, idx_sno).value}{SPLIT_CHAR}{table.cell(i, idx_sname).value}'
+                        if sinfo not in stuInfos:
+                            datas[sinfo] = {}
+                            stuInfos.append(sinfo)
+                        try:
+                            sdate = table.cell(i, idx_date).value
+                            if sdate not in stuDates:
+                                stuDates.append(sdate)
+                            temp_data = []
+                            for idx in header_profile_idxs:
+                                if idx != -1:
+                                    temp_data.append(table.cell(i, idx).value)
+                                else:
+                                    temp_data.append(STR_UNDO)
+                            datas[sinfo][sdate] = temp_data
+                        except Exception as e:
+                            log.warn(f'{e}', exc_info=True)
+                    if confAct.ONLY_FIRST_SHEET:
+                        break
+            except Exception as e:
+                log.warn(f'读取{excel_path}出错: {e}', exc_info = True)
+        
+        # 补充遗漏的日期数据
+        undoData = [STR_UNDO] * len(HEADER_PROFILE[2:])
+        for sinfo, sData in datas.items():
+            for date in stuDates:
+                if date not in sData:
+                    datas[sinfo][date] = undoData
+                    log.debug(f'人员: {sinfo} - 缺少日期: {date}')
+        
+        return datas, stuInfos
+
+    def generateProfiles(self, datas, stuInfos, output_dir):
+        total = len(stuInfos)
+        for i in range(total):
+            sinfo = stuInfos[i]
+            sno, sname = sinfo.split(SPLIT_CHAR)
+            self._signal.emit(f'生成中: {i} / {total} {sno} {sname}')
+            excel_path = os_path_join(output_dir, f'{sno}_{sname}.xlsx')
+            aStuData = datas[sinfo]
+            dataLen = len(HEADER_PROFILE)
+            try:
+                excel = xlsxwriter_Workbook(excel_path)
+                table = excel.add_worksheet()
+                dates = sorted(list(aStuData.keys()))
+                format_header = excel.add_format({'bold': True, 'font_name': FONT_NAME_YAHEI, 'font_size': FONT_SIZE, 'text_wrap': True, 'valign': 'top'})
+                format_cell = excel.add_format({'font_name': FONT_NAME_YAHEI, 'font_size': FONT_SIZE, 'valign': 'top'})
+                # 写入表头
+                for hi in range(dataLen):
+                    table.write(0, hi, HEADER_PROFILE[hi], format_header)
+                # 依次写入日期及当日数据
+                for di in range(len(dates)):
+                    table.write(di+1, 0, sno, format_cell)
+                    table.write(di+1, 1, sname, format_cell)
+                    for ki in range(dataLen-2):
+                        table.write(di+1, ki+2, aStuData[dates[di]][ki], format_cell)
+            except Exception as e:
+                self._signal.emit(f'表格创建失败:{e}')
+                log.error(f'创建{excel_path}失败: {e}', exc_info=True)
+            finally:
+                excel.close()
+        self._finished.emit()

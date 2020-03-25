@@ -6,5 +6,6 @@
 /common/__pycache__/
 /configure/__pycache__/
 /settings/settings_user.json
+/htmls/
 /excels/
 /logs/*

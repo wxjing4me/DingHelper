@@ -5,6 +5,9 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 USER_SETTINGS_JSON = os.path.join(ROOT_DIR, 'settings', 'settings_user.json')
 DEFAULT_SETTINGS_JSON = os.path.join(ROOT_DIR, 'settings', 'settings_default.json')
 
+EXCEL_LOCATION = '生成位置文件'
+EXCEL_PROFILE = '生成一人一档'
+
 APP_NAME = 'DingHelper'
 VERSION = 'v1.1.0'
 AUTHOR = '@wxjing'
@@ -67,11 +70,17 @@ FONT_SIZE = 10
 STR_SNO = '工号'
 STR_NAME = '提交人'
 STR_TIME_LOC = '当前时间,当前地点'
+STR_DATE = '填写周期'
+
+STR_SID = '学号'
+STR_SNAME = '姓名'
 
 STR_UNDO = '-'
 
 HEADER_REQUIRED = [STR_SNO, STR_NAME, STR_TIME_LOC]
 
+# 一人一档表头
+HEADER_PROFILE = [STR_SID, STR_SNAME, '填写周期', '提交时间', '今日体温（格式如：36.5 或 “无体温计”）', '今日位置', '当前时间,当前地点', '近两日有无以下症状', '近两日个人动向', '近两日是否乘坐公共交通工具（公交、火车等）', '近两日接触人员情况', '其他情况说明', '目前健康状况', '目前所在城市']
 
 LOC_QQ = '腾讯位置'
 LOC_AMAP = '高德位置'

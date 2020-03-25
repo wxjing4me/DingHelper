@@ -7,7 +7,7 @@ from os import system as os_system
 from os.path import split as os_path_split, normpath as os_path_normpath
 from time import strftime as time_strftime, localtime as time_localtime
 
-from common.excel_action import MergeExcelWorker, testRawExcel
+from common.excel_action import MergeExcelWorker, CreateProfilesWorker, testRawExcel
 from configure.config_values import *
 from configure import config_action as confAct
 from configure.logging_action import Log
@@ -16,19 +16,21 @@ log = Log(__name__).getLog()
 
 class ExcelWindow(QWidget):
     def __init__(self):
-       super().__init__()
+        super().__init__()
 
-       self.excelPathList = []
-       self.excelOutputPath = ''
-       self.excelDir = ''
+        self.switchType = EXCEL_LOCATION
+        self.excelPathList = []
+        self.excelOutputPath = ''
+        self.excelDir = ''
+        self.profilesDir = ''
 
-       self.initUI()
+        self.initUI()
 
     def initUI(self):
 
         font_Yahei = QFont(FONT_NAME_YAHEI)
 
-        self.setWindowTitle('生成位置文件')
+        self.setWindowTitle(EXCEL_LOCATION)
         self.setWindowIcon(QIcon(APP_ICON_PATH))
         self.setGeometry(450, 200, 600, 400)
         
@@ -39,13 +41,17 @@ class ExcelWindow(QWidget):
 
         #-----说明模块---------------------------------------
         widget_intro = QWidget()
-        layout_intro = QVBoxLayout()
+        layout_intro = QHBoxLayout()
 
         label_intro = QLabel('说明：添加的文件必须是从钉钉【员工健康】中导出的原始数据表\n  至少添加2个文件哦！')
-        
+        self.btn_switch = QPushButton(f'切换为【{EXCEL_PROFILE}】')
+        self.btn_switch.clicked.connect(self.clickBtn_switch)
+
         widget_intro.setLayout(layout_intro)
 
         layout_intro.addWidget(label_intro)
+        layout_intro.addWidget(self.btn_switch)
+
 
         layout_main.addWidget(widget_intro)
 
@@ -76,7 +82,7 @@ class ExcelWindow(QWidget):
         layout_buttons.addWidget(self.btn_mergeExcel)
 
         self.btn_openMergeExcelDir = QPushButton('打开路径')
-        self.btn_openMergeExcelDir.clicked.connect(self.clickbtn_openMergeExcelDir)
+        self.btn_openMergeExcelDir.clicked.connect(self.clickbtn_openDir)
         self.btn_openMergeExcelDir.setEnabled(False)
         layout_buttons.addWidget(self.btn_openMergeExcelDir)
         
@@ -119,7 +125,15 @@ class ExcelWindow(QWidget):
     def openWin(self):
         self.__init__()
         self.show()
-
+        
+    def clickBtn_switch(self):
+        self.btn_switch.setText(f'切换为【{self.switchType}】')
+        if self.switchType == EXCEL_LOCATION:
+            self.switchType = EXCEL_PROFILE
+        else:
+            self.switchType = EXCEL_LOCATION
+        self.setWindowTitle(self.switchType)
+        
     def testBtn_mergeExcel(self):
         if len(self.excelPathList) >= 2:
             return True
@@ -128,6 +142,8 @@ class ExcelWindow(QWidget):
 
     def clickBtn_addExcel(self):
         temp_excelPathList, _ = QFileDialog.getOpenFileNames(self, "选择【每日健康打卡】导出数据文件", confAct.DATA_DIR, "Excel files(*.xlsx , *.xls)")
+        #FIXME:无法显示
+        self.updateStatus('添加中，请稍候...')
         errMsg = []
         for excelPath in temp_excelPathList:
             if excelPath not in self.excelPathList:
@@ -139,6 +155,7 @@ class ExcelWindow(QWidget):
                     errMsg.append(testRes['msg'])
         if len(errMsg) != 0:
             self.showMessageBox(errMsg).exec()
+        self.updateStatus('添加完毕，请点击【开始生成】')
         self.btn_mergeExcel.setEnabled(self.testBtn_mergeExcel())
 
     def clickbtn_deleteExcel(self):
@@ -158,7 +175,12 @@ class ExcelWindow(QWidget):
         self.btn_mergeExcel.setEnabled(False)
 
     def clickbtn_mergeExcel(self):
-        # 选择输出文件路径
+        if self.switchType == EXCEL_LOCATION:
+            self.mergeExcel_Location()
+        else:
+            self.mergeExcel_Profile()
+
+    def mergeExcel_Location(self):
         now = time_strftime("%Y-%m-%d-%H-%M-%S", time_localtime())
         self.excelOutputPath, _ = QFileDialog.getSaveFileName(self, "选择Excel保存路径", '每日健康打卡位置汇总（%s）' % now, "Excel files(*.xlsx , *.xls)")
         self.excelDir, self.excelName = os_path_split(self.excelOutputPath)
@@ -168,10 +190,21 @@ class ExcelWindow(QWidget):
             self.mergeExcel()
             self.mergeExcelEnd()
 
-    def clickbtn_openMergeExcelDir(self):
-        if self.excelDir != '':
-            excelDir = os_path_normpath(self.excelDir)
-            os_system("explorer.exe %s" % excelDir)
+    def mergeExcel_Profile(self):
+        self.profilesDir = QFileDialog.getExistingDirectory(self, '选择保存一人一档的文件夹路径', confAct.DATA_DIR)
+        if self.profilesDir != '':
+            self.mergeExcelStart()
+            self.createProfiles()
+            self.mergeExcelEnd()
+
+    def clickbtn_openDir(self):
+        if self.switchType == EXCEL_LOCATION:
+            openDir = self.excelDir
+        else:
+            openDir = self.profilesDir
+        if openDir != '':
+            openDir = os_path_normpath(openDir)
+            os_system("explorer.exe %s" % openDir)
 
     def mergeExcel(self):
 
@@ -184,6 +217,17 @@ class ExcelWindow(QWidget):
         self.mergeExcelThread.finished.connect(lambda: self.updateStatus(f'生成位置文件结束!【打开路径】吧~ 文件名：{self.excelName}'))
 
         self.mergeExcelThread.start()
+
+    def createProfiles(self):
+        self.createProfilesWorker = CreateProfilesWorker(self.excelPathList, self.profilesDir)
+        self.createProfilesThread = QThread()
+        self.createProfilesWorker._signal.connect(self.updateStatus)
+        self.createProfilesWorker.moveToThread(self.createProfilesThread)
+        self.createProfilesWorker._finished.connect(self.createProfilesThread.quit)
+        self.createProfilesThread.started.connect(self.createProfilesWorker.work)
+        self.createProfilesThread.finished.connect(lambda: self.updateStatus(f'生成位置文件结束!【打开路径】吧~ 文件夹路径：{self.profilesDir}'))
+
+        self.createProfilesThread.start()
 
     def mergeExcelStart(self):
         if self.setBtnsUnabled():
