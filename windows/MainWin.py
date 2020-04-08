@@ -139,6 +139,10 @@ class MainWindow(QMainWindow):
         self.input_setKey.setEnabled(True)
         self.input_setKey.setPlaceholderText(eval(confAct.MAP_TYPE+'_API_FORMAT'))
         self.btn_setKey.setEnabled(True)
+        self.ApiKeyOK = False
+        self.ApiKey = ''
+        self.MapsDir = ''
+        self.excelPath = ''
 
     def clickBtn_setKey(self):
         self.ApiKey = self.input_setKey.text()
@@ -173,6 +177,7 @@ class MainWindow(QMainWindow):
             self.btn_mergeExcel.setEnabled(False)
             self.btn_selectExcel.setEnabled(False)
             self.btn_drawMap.setEnabled(False)
+            self.btn_setting.setEnabled(False)
             self.startAnalyse()
         else:
             self.updateOutput(f"提示：请先设置{MAP_NAMES[confAct.MAP_TYPE]}地图API开发者密钥（Key）~")
@@ -187,6 +192,10 @@ class MainWindow(QMainWindow):
         if len(log_file.strip()) != 0:
             with open(log_file, 'w+') as f:
                 f.write(self.output.toHtml())
+            try:
+                os.system(f'"{confAct.BROWSER_PATH}" {os.path.abspath(log_file)}')
+            except Exception as e:
+                log.warn(f'浏览器打开失败 - Error: {e}')
 
     def clickBtn_drawMap(self):
         self.MapsDir = QFileDialog.getExistingDirectory(self, '选择保存地图的文件夹路径', confAct.DATA_DIR)
@@ -218,6 +227,7 @@ class MainWindow(QMainWindow):
         self.btn_mergeExcel.setEnabled(True)
         self.btn_selectExcel.setEnabled(True)
         self.btn_drawMap.setEnabled(True)
+        self.btn_setting.setEnabled(True)
 
     def drawMap(self):
         

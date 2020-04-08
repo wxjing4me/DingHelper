@@ -132,7 +132,7 @@ class MergeExcelWorker(QObject):
             count += 1
             try:
                 excel = xlrd_open_workbook(excel_path)
-                self._signal.emit(f'正在处理 {count}/{total}：{excel_path}')
+                self._signal.emit(f'正在处理 {count}/{total}：<br>{excel_path}')
                 time_sleep(0.5)
                 tables = excel.sheets()
                 for table in tables:

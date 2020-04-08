@@ -1,8 +1,1 @@
-{
-    "MAP_TYPE": "AMAP",
-    "SHOW_DISTANCE": "show",
-    "FUNC_TYPE": "clockIn",
-    "HANDLE_SHEET": "first",
-    "START_ROW": 1,
-    "DATA_DIR": "I:/Github/DingHelper/excels"
-}
+{"MAP_TYPE": "AMAP", "SHOW_DISTANCE": "show", "FUNC_TYPE": "clockIn", "HANDLE_SHEET": "first", "START_ROW": 1, "BROWSER_PATH": "C:Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe", "DATA_DIR": "I:\\Github\\DingHelper\\excels"}

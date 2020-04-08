@@ -120,15 +120,28 @@ class SettingWindow(QWidget):
         layout_row.addWidget(self.input_row)
         layout_settings.addWidget(group_row)
 
-        group_dirpath = QGroupBox('文件夹路径')
-        layout_dirpath = QVBoxLayout()
-        group_dirpath.setLayout(layout_dirpath)
-        self.label_dirpath = QLabel()
+        group_browserPath = QGroupBox('浏览器路径')
+        layout_browserPath = QVBoxLayout()
+        group_browserPath.setLayout(layout_browserPath)
+        self.label_browserPath = QLabel()
+        self.label_browserPath.setWordWrap(True)
+        #FIXME: 以下语句无效。文本自动换行后，显示不完全
+        self.label_browserPath.setScaledContents(True)
+        btn_chooseBrowserPath = QPushButton('修改浏览器路径')
+        btn_chooseBrowserPath.clicked.connect(self.clickbtn_chooseBrowserPath)
+        layout_browserPath.addWidget(self.label_browserPath)
+        layout_browserPath.addWidget(btn_chooseBrowserPath)
+        layout_settings.addWidget(group_browserPath)
+
+        group_dirPath = QGroupBox('文件夹路径')
+        layout_dirPath = QVBoxLayout()
+        group_dirPath.setLayout(layout_dirPath)
+        self.label_dirPath = QLabel()
         btn_chooseDirpath = QPushButton('修改文件夹路径')
         btn_chooseDirpath.clicked.connect(self.clickbtn_chooseDirpath)
-        layout_dirpath.addWidget(self.label_dirpath)
-        layout_dirpath.addWidget(btn_chooseDirpath)
-        layout_settings.addWidget(group_dirpath)
+        layout_dirPath.addWidget(self.label_dirPath)
+        layout_dirPath.addWidget(btn_chooseDirpath)
+        layout_settings.addWidget(group_dirPath)
 
         layout_main.addWidget(self.scroll)
 
@@ -183,23 +196,25 @@ class SettingWindow(QWidget):
     def setSettings(self):
         config = confAct.updateSettings()
         eval('self.group_map_'+config["MAP_TYPE"]).setChecked(True)
-        # self.group_map_AMAP.setChecked(True)
         eval('self.group_type_'+config["FUNC_TYPE"]).setChecked(True)
-        # self.group_type_clockIn.setChecked(True)
         eval('self.group_distance_'+config["SHOW_DISTANCE"]).setChecked(True)
-        # self.group_distance_show.setChecked(True)
         eval('self.group_sheet_'+config["HANDLE_SHEET"]).setChecked(True)
-        # self.group_sheet_first.setChecked(True)
         self.group_header_staff.setChecked(True)
         self.group_newheader_staff.setChecked(True)
         self.input_row.setText(str(config["START_ROW"]))
-        self.label_dirpath.setText(config["DATA_DIR"])
+        self.label_dirPath.setText(config["DATA_DIR"])
+        self.label_browserPath.setText(config["BROWSER_PATH"])
+    
+    def clickbtn_chooseBrowserPath(self):
+        self.BrowserPath, _ = QFileDialog.getOpenFileName(self, "选择默认浏览器路径", 'explorer.exe', "可执行程序(*.exe)")
+        if self.BrowserPath.strip() != '':
+            self.label_browserPath.setText(self.BrowserPath)
 
     def clickbtn_chooseDirpath(self):
         self.DirPath = QFileDialog.getExistingDirectory(self, '选择默认文件夹路径', './')
         log.debug(f'选择文件夹路径：{self.DirPath}')
         if self.DirPath.strip() != '':
-            self.label_dirpath.setText(self.DirPath)
+            self.label_dirPath.setText(self.DirPath)
 
     def clickbtn_defaultSettings(self):
         try:
@@ -231,8 +246,12 @@ class SettingWindow(QWidget):
             config["START_ROW"] = int(self.input_row.text())
         else:
             config["START_ROW"] = 1
-        if self.label_dirpath.text().strip() != '':
-            config["DATA_DIR"] = self.label_dirpath.text()
+        if self.label_browserPath.text().strip() != '':
+            config["BROWSER_PATH"] = self.label_browserPath.text()
+        else:
+            config["BROWSER_PATH"] = BROWSER_PATH
+        if self.label_dirPath.text().strip() != '':
+            config["DATA_DIR"] = self.label_dirPath.text()
         else:
             config["DATA_DIR"] = DATA_DIR
         if confAct.saveConfig(config):

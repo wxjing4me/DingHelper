@@ -214,7 +214,7 @@ class ExcelWindow(QWidget):
         self.mergeExcelWorker.moveToThread(self.mergeExcelThread)
         self.mergeExcelWorker._finished.connect(self.mergeExcelThread.quit)
         self.mergeExcelThread.started.connect(self.mergeExcelWorker.work)
-        self.mergeExcelThread.finished.connect(lambda: self.updateStatus(f'生成位置文件结束!【打开路径】吧~ 文件名：{self.excelName}'))
+        self.mergeExcelThread.finished.connect(lambda: self.updateStatus(f'生成位置文件结束!【打开路径】吧~ <br>文件名：{self.excelName}'))
 
         self.mergeExcelThread.start()
 
@@ -225,7 +225,7 @@ class ExcelWindow(QWidget):
         self.createProfilesWorker.moveToThread(self.createProfilesThread)
         self.createProfilesWorker._finished.connect(self.createProfilesThread.quit)
         self.createProfilesThread.started.connect(self.createProfilesWorker.work)
-        self.createProfilesThread.finished.connect(lambda: self.updateStatus(f'生成位置文件结束!【打开路径】吧~ 文件夹路径：{self.profilesDir}'))
+        self.createProfilesThread.finished.connect(lambda: self.updateStatus(f'生成一人一档文件结束!【打开路径】吧~ <br>文件夹路径：{self.profilesDir}'))
 
         self.createProfilesThread.start()
 

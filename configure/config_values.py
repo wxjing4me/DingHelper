@@ -9,7 +9,7 @@ EXCEL_LOCATION = '生成位置文件'
 EXCEL_PROFILE = '生成一人一档'
 
 APP_NAME = 'DingHelper'
-VERSION = 'v1.1.0'
+VERSION = 'v1.2.0'
 AUTHOR = '@wxjing'
 AUTHOR_GITHUB_URL = 'https://github.com/wxjing4me'
 APP_GITHUB_URL = 'https://github.com/wxjing4me/DingHelper'
@@ -52,7 +52,7 @@ LOC_TYPE_ELSE = "【系统不清楚】"
 
 LOC_NAME_FUJIAN = '福建省'
 LOC_NAME_FUZHOU = '福州市'
-LOC_NAME_FUZHOU_LIST = ['闽侯县' '鼓楼区', '台江区', '晋安区', '仓山区', '马尾区']
+LOC_NAME_FUZHOU_LIST = ['闽侯县', '鼓楼区', '台江区', '晋安区', '仓山区', '马尾区']
 
 QQ_MAX_CNT_PER_SEC = 4
 AMAP_MAX_CNT_PER_SEC = 49

@@ -80,12 +80,15 @@ class AnalyseWorker(QObject):
                     address = res['result']['address_component']
             if REQ_CNT % eval(self.mtype+'_MAX_CNT_PER_SEC') == 0:
                 time_sleep(1)
+        except TimeoutError:
+            #FIXME: 无效
+            self._signal.emit('提示: 请求超时')
         except Exception as e:
             # self._signal.emit('ERROR: request请求错误: %s' % e)
             log.error(f'ERROR: request请求错误: {e}', exc_info=True)
         return address
 
-    def compareAdress(self, yesterAddress, todayAddress):
+    def compareAddress(self, yesterAddress, todayAddress):
         res = {}
         try:
             yesterAddressBrief = '%s%s%s' % (yesterAddress['province'], yesterAddress['city'], yesterAddress['district'])
@@ -96,7 +99,10 @@ class AnalyseWorker(QObject):
         except:
             todayAddressBrief = todayAddress['nation']
         res['amap_msg'] = '%s -> %s' % (yesterAddressBrief, todayAddressBrief)
-        if yesterAddressBrief == todayAddressBrief:
+        if yesterAddressBrief == '未知' or todayAddressBrief == '未知':
+            res['type'] = LOC_TYPE_ELSE
+            return res
+        elif yesterAddressBrief == todayAddressBrief:
             res['type'] = LOC_TYPE_STAY
             return res
         else:
@@ -159,7 +165,7 @@ class AnalyseWorker(QObject):
                 except:
                     todayLat, todayLng, todayLocation = DEFAULT_Location[:3]
                 todayAddress = self.getAddressByLL(location)
-            cRes = self.compareAdress(yesterAddress, todayAddress)
+            cRes = self.compareAddress(yesterAddress, todayAddress)
             if cRes['type'] != LOC_TYPE_STAY:
                 self._signal.emit(f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span><br>{eval('LOC_'+self.mtype)}：{cRes['amap_msg']}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
             else:
@@ -211,6 +217,8 @@ class AnalyseWorker(QObject):
                     disStrF = f"<span style='color:blue'>{disStrF}</span>"
             if REQ_DIS_CNT % eval(self.mtype+'_MAX_CNT_PER_SEC') == 0:
                 time_sleep(1)
+        except TimeoutError:
+            self._signal.emit('提示: 请求超时')
         except Exception as e:
             log.error(f'计算距离出错：{e}', exc_info=True)
         return f'（{disRes}{disStr}, {disResF}{disStrF}）'
