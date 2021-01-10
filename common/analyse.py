@@ -1,6 +1,6 @@
 #-*-coding:utf-8-*-
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QDateTime
-from requests import get as requests_get
+from requests import get as requests_get, exceptions
 from json import loads as json_loads
 from time import sleep as time_sleep
 
@@ -80,9 +80,11 @@ class AnalyseWorker(QObject):
                     address = res['result']['address_component']
             if REQ_CNT % eval(self.mtype+'_MAX_CNT_PER_SEC') == 0:
                 time_sleep(1)
-        except TimeoutError:
+        except exceptions.ConnectTimeout:
             #FIXME: 无效
-            self._signal.emit('提示: 请求超时')
+            self._signal.emit('提示: ConnectTimeout请求超时')
+        except exceptions.Timeout:
+            self._signal.emit('提示: Timeout请求超时')
         except Exception as e:
             # self._signal.emit('ERROR: request请求错误: %s' % e)
             log.error(f'ERROR: request请求错误: {e}', exc_info=True)
@@ -217,8 +219,11 @@ class AnalyseWorker(QObject):
                     disStrF = f"<span style='color:blue'>{disStrF}</span>"
             if REQ_DIS_CNT % eval(self.mtype+'_MAX_CNT_PER_SEC') == 0:
                 time_sleep(1)
-        except TimeoutError:
-            self._signal.emit('提示: 请求超时')
+        except exceptions.ConnectTimeout:
+            #FIXME: 无效
+            self._signal.emit('提示: ConnectTimeout请求超时')
+        except exceptions.Timeout:
+            self._signal.emit('提示: Timeout请求超时')
         except Exception as e:
             log.error(f'计算距离出错：{e}', exc_info=True)
         return f'（{disRes}{disStr}, {disResF}{disStrF}）'
