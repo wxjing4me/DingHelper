@@ -66,7 +66,7 @@
 ~$ pip install pyecharts
 ~$ pip install PyQt5
 ~$ pip install requests
-~$ pip install xlrd
+~$ pip install xlrd==1.2.0
 ~$ pip install XlsxWriter
 ```
 
@@ -76,13 +76,24 @@
 * pywin32-227-cp36-cp36m-win_amd64.whl
 > https://pypi.org/project/pywin32/#files
 
+#### Virtualenv
+
+```
+> virtualenv .env
+> .\.env\Scripts\activate.bat
+> pip install -r requirements.txt
+```
+
 ### Run
 
 ```
+> .\.env\Scripts\activate.bat
 > python app.py
 ```
 
 ### Package into exe By PyInstaller
+
+> 修改`app.spec`中`python`和`pyechart`的路径
 
 * 64bit
 

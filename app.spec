@@ -16,7 +16,7 @@ a = Analysis([
             'configure\\logging_action.py'
             ],
             pathex=[
-                'D:\\Anaconda3\\envs\\py36\\Lib\\site-packages', 
+                'E:\\Github\\DingHelper\\.env\\Lib\\site-packages', 
                 'I:\\Github\\DingHelper'
                 ],
             binaries=[],
@@ -25,8 +25,8 @@ a = Analysis([
                 ('images/excel_tip.png', 'images'), 
                 ('settings/settings_default.json', 'settings'), 
                 ('logs/error.log', 'logs'), 
-                ('D:/Anaconda3/envs/py36/Lib/site-packages/pyecharts', 'pyecharts'), 
-                ('D:/Anaconda3/envs/py36/Lib/site-packages/pyecharts-1.6.2.dist-info', 'pyecharts-1.6.2.dist-info')
+                ('E:\Github\DingHelper\.env\Lib\site-packages\pyecharts', 'pyecharts'), 
+                ('E:\Github\DingHelper\.env\Lib\site-packages\pyecharts-1.9.0.dist-info', 'pyecharts-1.9.0.dist-info')
                 ],
             hiddenimports=[],
             hookspath=[],
