@@ -93,7 +93,9 @@
 
 ### Package into exe By PyInstaller
 
+> 删除`build`、`dist`文件夹
 > 修改`app.spec`中`python`和`pyechart`的路径
+> 使用`dist`中的`app.exe`
 
 * 64bit
 
