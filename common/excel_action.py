@@ -164,6 +164,7 @@ class MergeExcelWorker(QObject):
             for stu in stuInfos:
                 if stu not in datas[date]:
                     datas[date][stu] = STR_UNDO
+        stuInfos = sorted(stuInfos)
         return datas, stuInfos
 
 

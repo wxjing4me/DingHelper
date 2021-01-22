@@ -1,3 +1,6 @@
+#-*-coding:utf-8-*-
+# 展示【当天】【所有学生】的位置
+
 from pyecharts.charts import Geo
 from pyecharts import options as opts
 from pyecharts.globals import ThemeType
@@ -10,7 +13,10 @@ import os
 
 DEFAULT_Location = [20, 80, "未知"]
 
-dir_path = os.path.join('C:','Users', '哇咔咔', 'Desktop')
+dir_path = os.path.join('C:','Users', 'wxjing', 'Desktop')
+
+# 表头: 工号，姓名，当前时间,当前地点
+excel_path = os.path.join(dir_path, '每日健康打卡_2021-01-21.xlsx')
 
 def drawGeoMap(excel_path, mtype='china'):
     data = xlrd.open_workbook(excel_path)
@@ -35,7 +41,7 @@ def drawGeoMap(excel_path, mtype='china'):
 
     # print(f'学生数：{len(allData)}')
 
-    title = '2020年7月29日能仔位置'
+    title = '2021年1月21日能仔位置'
     geo = Geo(init_opts=opts.InitOpts(width='1000px', height='580px', page_title=title, theme=ThemeType.LIGHT))
 
     geo.add_schema(maptype=mtype)
@@ -59,7 +65,7 @@ def drawGeoMap(excel_path, mtype='china'):
     geo.set_series_opts(label_opts=opts.LabelOpts(is_show=False))
     geo.set_global_opts(legend_opts=opts.LegendOpts(type_='scroll', orient='vertical', pos_left='left', pos_top='10%', is_show=False), title_opts=opts.TitleOpts(title=title))
 
-    map_path = os.path.join(dir_path, '2020年7月29日能仔位置地图.html')
+    map_path = os.path.join(dir_path, '2021年1月21日能仔位置地图.html')
     geo.render(map_path)
 
     # os.system(f'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" {os.path.abspath(map_path)}')
@@ -67,7 +73,6 @@ def drawGeoMap(excel_path, mtype='china'):
     print('done.')
 
 if __name__ == '__main__':
-    excel_path = os.path.join(dir_path, '每日健康打卡_2020-07-28.xlsx')
 
     mtype = 'china' # china # 福建
     drawGeoMap(excel_path, mtype)

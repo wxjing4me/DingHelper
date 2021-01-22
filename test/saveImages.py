@@ -1,3 +1,5 @@
+#-*-coding:utf-8-*-
+
 from xlrd import open_workbook as xlrd_open_workbook
 from requests import get as requests_get
 import os
