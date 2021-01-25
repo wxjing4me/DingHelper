@@ -101,6 +101,10 @@ class AnalyseWorker(QObject):
         except:
             todayAddressBrief = todayAddress['nation']
         res['amap_msg'] = '%s -> %s' % (yesterAddressBrief, todayAddressBrief)
+        res['is_danger'] = ''
+        for danger_place in DANGER_PLACES:
+            if yesterAddressBrief[:len(danger_place)] == danger_place:
+                res['is_danger'] = '中高风险地区'
         if yesterAddressBrief == '未知' or todayAddressBrief == '未知':
             res['type'] = LOC_TYPE_ELSE
             return res
@@ -169,11 +173,11 @@ class AnalyseWorker(QObject):
                 todayAddress = self.getAddressByLL(location)
             cRes = self.compareAddress(yesterAddress, todayAddress)
             if cRes['type'] != LOC_TYPE_STAY:
-                self._signal.emit(f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span><br>{eval('LOC_'+self.mtype)}：{cRes['amap_msg']}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
+                self._signal.emit(f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span> <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{eval('LOC_'+self.mtype)}：{cRes['amap_msg']}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
             else:
                 if confAct.SHOW_DISTANCE:
                     dRes = self.calculateDistance(yesterLat, yesterLng, todayLat, todayLng)
-                    self._signal.emit(f'>> {yesterDate} - {todayDate} {dRes}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}')
+                    self._signal.emit(f">> {yesterDate} - {todayDate} {dRes} <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
             yesterDate = todayDate
             yesterAddress = todayAddress
             yesterLocation = todayLocation
