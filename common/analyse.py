@@ -7,6 +7,7 @@ from time import sleep as time_sleep
 from common.excel_action import readExcel
 from configure.logging_action import Log
 from configure.config_values import *
+from configure.danger_place import *
 from configure import config_action as confAct
 
 global REQ_CNT
@@ -101,10 +102,11 @@ class AnalyseWorker(QObject):
         except:
             todayAddressBrief = todayAddress['nation']
         res['amap_msg'] = '%s -> %s' % (yesterAddressBrief, todayAddressBrief)
+        # 中高风险地区
         res['is_danger'] = ''
         for danger_place in DANGER_PLACES:
             if yesterAddressBrief[:len(danger_place)] == danger_place:
-                res['is_danger'] = '中高风险地区'
+                res['is_danger'] = f'{danger_place}是中高风险地区'
         if yesterAddressBrief == '未知' or todayAddressBrief == '未知':
             res['type'] = LOC_TYPE_ELSE
             return res
