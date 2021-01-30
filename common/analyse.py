@@ -31,10 +31,11 @@ class AnalyseWorker(QObject):
         global REQ_CNT
         global REQ_DIS_CNT
         REQ_CNT, REQ_DIS_CNT = 1, 1
-        stu_count = 1
+        stu_count = confAct.START_ROW
         stuDatas = readExcel(self.excelPath)
+        end_count = len(stuDatas)+confAct.START_ROW-1
         for aStuData in stuDatas:
-            self._signal.emit('- %d / %d ' % (stu_count, len(stuDatas)) + '-' * 100)
+            self._signal.emit('- %d / %d ' % (stu_count, end_count) + '-' * 100)
             # print(aStuData)
             self.aStuAnalyse(aStuData)
             stu_count += 1

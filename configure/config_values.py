@@ -7,6 +7,7 @@ DEFAULT_SETTINGS_JSON = os.path.join(ROOT_DIR, 'settings', 'settings_default.jso
 
 EXCEL_LOCATION = '生成位置文件'
 EXCEL_PROFILE = '生成一人一档'
+TITLE_PROFILE = '生成一人一档'
 
 APP_NAME = 'DingHelper'
 VERSION = 'v1.2.0'
@@ -82,7 +83,7 @@ HEADER_REQUIRED = [STR_SNO, STR_NAME, STR_TIME_LOC]
 # 一人一档表头
 # HEADER_PROFILE = [STR_SID, STR_SNAME, '填写周期', '提交时间', '今日体温', '今日位置', '当前时间,当前地点', '今日有无以下症状', '今日个人动向', '今日接触人员情况', '其他情况说明', '目前健康状况', '目前所在城市']
 
-HEADER_PROFILE = [STR_SID, STR_SNAME, '填写周期', '今日体温', '目前健康状况', '目前所在城市', '当前时间,当前地点']
+HEADER_PROFILE = [STR_SID, STR_SNAME, '填写周期', '今日体温', '今日有无以下症状', '近两日有无以下症状', '当前时间,当前地点']
 
 LOC_QQ = '腾讯位置'
 LOC_AMAP = '高德位置'

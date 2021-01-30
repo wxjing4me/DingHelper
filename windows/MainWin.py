@@ -75,6 +75,9 @@ class MainWindow(QMainWindow):
         self.btn_setting = QPushButton('设置')
         layout_buttons.addWidget(self.btn_setting)
 
+        self.btn_profileWin = QPushButton('生成一人一档')
+        layout_buttons.addWidget(self.btn_profileWin)
+
         self.btn_mergeExcel = QPushButton('生成位置文件')
         layout_buttons.addWidget(self.btn_mergeExcel)
 
