@@ -106,14 +106,18 @@ class AnalyseWorker(QObject):
         # 中高风险地区
         res['is_danger'] = ''
         for danger_place in DANGER_PLACES:
-            if yesterAddressBrief[:len(danger_place)] == danger_place:
+            if todayAddressBrief[:len(danger_place)] == danger_place:
                 res['is_danger'] = f'{danger_place}是中高风险地区'
+                log.info(f"{todayAddress['province']}, {todayAddress['city']}")
+        # 今日是否在“福建省福州市”
+        res['todayInFZ'] = False
+        if todayAddress['province'] == LOC_NAME_FUJIAN and todayAddress['city'] == LOC_NAME_FUZHOU:
+            res['todayInFZ'] = True
+        # 位置异动
         if yesterAddressBrief == '未知' or todayAddressBrief == '未知':
             res['type'] = LOC_TYPE_ELSE
-            return res
         elif yesterAddressBrief == todayAddressBrief:
             res['type'] = LOC_TYPE_STAY
-            return res
         else:
             try:
                 if todayAddress['city'] == LOC_NAME_FUZHOU and todayAddress['district'] in LOC_NAME_FUZHOU_LIST:
@@ -148,7 +152,7 @@ class AnalyseWorker(QObject):
             except:
                 # 系统不清楚
                 res['type'] = LOC_TYPE_ELSE
-            return res
+        return res
 
     def aStuAnalyse(self, aStuData):
     
@@ -175,12 +179,16 @@ class AnalyseWorker(QObject):
                     todayLat, todayLng, todayLocation = DEFAULT_Location[:3]
                 todayAddress = self.getAddressByLL(location)
             cRes = self.compareAddress(yesterAddress, todayAddress)
+            log.info(cRes['todayInFZ'])
             if cRes['type'] != LOC_TYPE_STAY:
                 self._signal.emit(f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span> <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{eval('LOC_'+self.mtype)}：{cRes['amap_msg']}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
             else:
-                if confAct.SHOW_DISTANCE:
+                if confAct.SHOW_DISTANCE and cRes['todayInFZ']:
                     dRes = self.calculateDistance(yesterLat, yesterLng, todayLat, todayLng)
                     self._signal.emit(f">> {yesterDate} - {todayDate} {dRes} <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
+                else:
+                    self._signal.emit(f">> {yesterDate} - {todayDate} <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
+
             yesterDate = todayDate
             yesterAddress = todayAddress
             yesterLocation = todayLocation
