@@ -1,4 +1,4 @@
-#-*-coding:utf-8-*-
+# -*-coding:utf-8-*-
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QDateTime
 from requests import get as requests_get, exceptions
 from json import loads as json_loads
@@ -14,6 +14,7 @@ global REQ_CNT
 global REQ_DIS_CNT
 
 log = Log(__name__).getLog()
+
 
 class AnalyseWorker(QObject):
     def __init__(self, apiKey='', excelPath='', mtype='AMAP'):
@@ -35,7 +36,8 @@ class AnalyseWorker(QObject):
         stuDatas = readExcel(self.excelPath)
         end_count = len(stuDatas)+confAct.START_ROW-1
         for aStuData in stuDatas:
-            self._signal.emit('- %d / %d ' % (stu_count, end_count) + '-' * 100)
+            self._signal.emit('- %d / %d ' %
+                              (stu_count, end_count) + '-' * 100)
             # print(aStuData)
             self.aStuAnalyse(aStuData)
             stu_count += 1
@@ -47,7 +49,6 @@ class AnalyseWorker(QObject):
     def stop(self):
         self.stopFlag = True
 
-    
     def getAddressByLL(self, location):
         '''逆地址解析: 利用经纬度（数字）获得具体地点（字典）
         '''
@@ -63,22 +64,27 @@ class AnalyseWorker(QObject):
             return address
         try:
             if self.mtype == 'AMAP':
-                response = requests_get(f'{AMAP_API_URL_LL2Address}location={longitude},{latitude}&key={self.apiKey}')
+                response = requests_get(
+                    f'{AMAP_API_URL_LL2Address}location={longitude},{latitude}&key={self.apiKey}')
             elif self.mtype == 'QQ':
-                response = requests_get(f'{QQ_API_URL_LL2Address}location={latitude},{longitude}&key={self.apiKey}')
+                response = requests_get(
+                    f'{QQ_API_URL_LL2Address}location={latitude},{longitude}&key={self.apiKey}')
             REQ_CNT += 1
             if response.status_code != 200:
                 self._signal.emit('ERROR: %d 获取地址失败' % response.status_code)
-                log.error(f'获取地址失败: mtype={self.mtype}, status_code={response.status_code}', exc_info=True)
+                log.error(
+                    f'获取地址失败: mtype={self.mtype}, status_code={response.status_code}', exc_info=True)
             else:
                 res = json_loads(response.text)
-                if self.mtype=='AMAP' and int(res['status']) == 0:
-                    log.warn(f"高德地图API错误（逆地理编码）: {res['info']}！location={location}")
+                if self.mtype == 'AMAP' and int(res['status']) == 0:
+                    log.warn(
+                        f"高德地图API错误（逆地理编码）: {res['info']}！location={location}")
                 elif self.mtype == 'AMAP' and int(res['status']) == 1:
                     address = res['regeocode']['addressComponent']
-                elif self.mtype=='QQ' and res['status'] != 0:
-                    log.warn(f"腾讯地图API错误（逆地址解析）: {res['message']}！location={location}")
-                elif self.mtype=='QQ' and res['status'] == 0:
+                elif self.mtype == 'QQ' and res['status'] != 0:
+                    log.warn(
+                        f"腾讯地图API错误（逆地址解析）: {res['message']}！location={location}")
+                elif self.mtype == 'QQ' and res['status'] == 0:
                     address = res['result']['address_component']
             if REQ_CNT % eval(self.mtype+'_MAX_CNT_PER_SEC') == 0:
                 time_sleep(1)
@@ -95,11 +101,13 @@ class AnalyseWorker(QObject):
     def compareAddress(self, yesterAddress, todayAddress):
         res = {}
         try:
-            yesterAddressBrief = '%s%s%s' % (yesterAddress['province'], yesterAddress['city'], yesterAddress['district'])
+            yesterAddressBrief = '%s%s%s' % (
+                yesterAddress['province'], yesterAddress['city'], yesterAddress['district'])
         except:
             yesterAddressBrief = yesterAddress['nation']
         try:
-            todayAddressBrief = '%s%s%s' % (todayAddress['province'], todayAddress['city'], todayAddress['district']) 
+            todayAddressBrief = '%s%s%s' % (
+                todayAddress['province'], todayAddress['city'], todayAddress['district'])
         except:
             todayAddressBrief = todayAddress['nation']
         res['amap_msg'] = '%s -> %s' % (yesterAddressBrief, todayAddressBrief)
@@ -111,8 +119,12 @@ class AnalyseWorker(QObject):
                 log.info(f"{todayAddress['province']}, {todayAddress['city']}")
         # 今日是否在“福建省福州市”
         res['todayInFZ'] = False
-        if todayAddress['province'] == LOC_NAME_FUJIAN and todayAddress['city'] == LOC_NAME_FUZHOU:
-            res['todayInFZ'] = True
+        log.debug(f'todayAddress={todayAddress}')
+        try:
+            if todayAddress['province'] == LOC_NAME_FUJIAN and todayAddress['city'] == LOC_NAME_FUZHOU:
+                res['todayInFZ'] = True
+        except Exception:
+            log.error(f'todayAddress={todayAddress}')
         # 位置异动
         if yesterAddressBrief == '未知' or todayAddressBrief == '未知':
             res['type'] = LOC_TYPE_ELSE
@@ -155,7 +167,7 @@ class AnalyseWorker(QObject):
         return res
 
     def aStuAnalyse(self, aStuData):
-    
+
         sno, sname = aStuData['info'].split(SPLIT_CHAR)
         sdata = aStuData['data']
 
@@ -179,15 +191,18 @@ class AnalyseWorker(QObject):
                     todayLat, todayLng, todayLocation = DEFAULT_Location[:3]
                 todayAddress = self.getAddressByLL(location)
             cRes = self.compareAddress(yesterAddress, todayAddress)
-            log.info(cRes['todayInFZ'])
             if cRes['type'] != LOC_TYPE_STAY:
-                self._signal.emit(f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span> <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{eval('LOC_'+self.mtype)}：{cRes['amap_msg']}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
+                self._signal.emit(
+                    f">> {yesterDate} - {todayDate} <span style='color:red'>{cRes['type']}</span> <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{eval('LOC_'+self.mtype)}：{cRes['amap_msg']}<br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
             else:
                 if confAct.SHOW_DISTANCE and cRes['todayInFZ']:
-                    dRes = self.calculateDistance(yesterLat, yesterLng, todayLat, todayLng)
-                    self._signal.emit(f">> {yesterDate} - {todayDate} {dRes} <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
+                    dRes = self.calculateDistance(
+                        yesterLat, yesterLng, todayLat, todayLng)
+                    self._signal.emit(
+                        f">> {yesterDate} - {todayDate} {dRes} <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
                 else:
-                    self._signal.emit(f">> {yesterDate} - {todayDate} <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
+                    self._signal.emit(
+                        f">> {yesterDate} - {todayDate} <span style='background-color: yellow'>{cRes['is_danger']}</span><br>{LOC_DING}：{yesterLocation} -> {todayLocation}")
 
             yesterDate = todayDate
             yesterAddress = todayAddress
@@ -200,22 +215,27 @@ class AnalyseWorker(QObject):
         disResF, disStrF = '距离福师大', '未知'
         try:
             if self.mtype == 'QQ':
-                response = requests_get(f'{QQ_API_URL_DISTANCE}from={fromLng},{fromLat}&to={toLng},{toLat};{FJNU_Lng},{FJNU_Lat}&key={self.apiKey}')
+                response = requests_get(
+                    f'{QQ_API_URL_DISTANCE}from={fromLng},{fromLat}&to={toLng},{toLat};{FJNU_Lng},{FJNU_Lat}&key={self.apiKey}')
             elif self.mtype == 'AMAP':
-                response = requests_get(f'{AMAP_API_URL_DISTANCE}origins={fromLat},{fromLng}|{FJNU_Lat},{FJNU_Lng}&destination={toLat},{toLng}&type=0&key={self.apiKey}')
+                response = requests_get(
+                    f'{AMAP_API_URL_DISTANCE}origins={fromLat},{fromLng}|{FJNU_Lat},{FJNU_Lng}&destination={toLat},{toLng}&type=0&key={self.apiKey}')
             REQ_DIS_CNT += 1
             if response.status_code != 200:
-                log.error(f'获取地址失败: status_code={response.status_code}', exc_info=True)
+                log.error(
+                    f'获取地址失败: status_code={response.status_code}', exc_info=True)
             else:
                 dist, distF = -1, -1
                 res = json_loads(response.text)
-                if self.mtype=='QQ' and res['status'] != 0:
-                    log.error(f"腾讯地图API错误（距离计算）: {res['message']}！from={fromLng},{fromLat}&to={toLng},{toLat};{FJNU_Lng},{FJNU_Lat}")
-                elif self.mtype=='QQ' and res['status'] == 0:
+                if self.mtype == 'QQ' and res['status'] != 0:
+                    log.error(
+                        f"腾讯地图API错误（距离计算）: {res['message']}！from={fromLng},{fromLat}&to={toLng},{toLat};{FJNU_Lng},{FJNU_Lat}")
+                elif self.mtype == 'QQ' and res['status'] == 0:
                     dist = res['result']['elements'][0]['distance']
                     distF = res['result']['elements'][1]['distance']
                 elif self.mtype == 'AMAP' and int(res['status']) == 0:
-                    log.error(f"高德地图API错误（距离计算）: {res['info']}！origins={fromLat},{fromLng}|{FJNU_Lat},{FJNU_Lng}&destination={toLat},{toLng}")
+                    log.error(
+                        f"高德地图API错误（距离计算）: {res['info']}！origins={fromLat},{fromLng}|{FJNU_Lat},{FJNU_Lng}&destination={toLat},{toLng}")
                 elif self.mtype == 'AMAP' and int(res['status']) == 1:
                     # log.debug(res['results'])
                     dist = int(res['results'][0]['distance'])
