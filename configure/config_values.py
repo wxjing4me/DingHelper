@@ -10,7 +10,7 @@ EXCEL_PROFILE = '生成一人一档'
 TITLE_PROFILE = '生成一人一档'
 
 APP_NAME = 'DingHelper'
-VERSION = 'v1.2.0'
+VERSION = 'v1.3.0'
 AUTHOR = '@wxjing'
 AUTHOR_GITHUB_URL = 'https://github.com/wxjing4me'
 APP_GITHUB_URL = 'https://github.com/wxjing4me/DingHelper'

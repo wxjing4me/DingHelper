@@ -119,7 +119,7 @@ class AnalyseWorker(QObject):
                 log.info(f"{todayAddress['province']}, {todayAddress['city']}")
         # 今日是否在“福建省福州市”
         res['todayInFZ'] = False
-        log.debug(f'todayAddress={todayAddress}')
+        # log.debug(f'todayAddress={todayAddress}')
         try:
             if todayAddress['province'] == LOC_NAME_FUJIAN and todayAddress['city'] == LOC_NAME_FUZHOU:
                 res['todayInFZ'] = True
