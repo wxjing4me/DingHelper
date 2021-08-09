@@ -12,7 +12,7 @@ pyecharts==1.6.2
 PyInstaller==3.6
 PyQt5==5.14.1
 PyQt5-sip==12.7.1
-pywin32==227
+pywin32==301
 pywin32-ctypes==0.2.0
 requests==2.23.0
 simplejson==3.17.0
